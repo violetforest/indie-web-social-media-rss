@@ -1,0 +1,180 @@
+<meta charset="utf-8">
+<title>Indie Web Feed Prototypes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one document column; a wide band of three working phones; the comparison table scrolls inside its own box */
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --ink:#14161B; --muted:#596072; --line:#DCE0E8;
+  --link:#2340D6; --visited:#7A2FBF; --rss:#D9660A; --bezel:#16181D; --tint:#EEF1FB;
+  --display:"Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body:"Source Serif 4", Georgia, serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1116; --surface:#171A21; --ink:#E9EBF1; --muted:#9AA1B2; --line:#2A2F3A;
+  --link:#8FA3FF; --visited:#C79BFF; --rss:#FF9A3D; --bezel:#000000; --tint:#1B2033; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1116; --surface:#171A21; --ink:#E9EBF1; --muted:#9AA1B2; --line:#2A2F3A;
+  --link:#8FA3FF; --visited:#C79BFF; --rss:#FF9A3D; --bezel:#000000; --tint:#1B2033; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:18px/1.6 var(--body);padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:1180px;margin:0 auto}
+.col{max-width:68ch}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+a{color:var(--link);text-underline-offset:3px}
+a:visited{color:var(--visited)}
+a:focus-visible{outline:2px solid var(--link);outline-offset:3px}
+.mono{font-family:var(--mono);font-size:13px;letter-spacing:.02em}
+
+.hero{padding-block:56px 32px}
+.eyebrow{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;color:var(--muted);margin:0 0 18px;letter-spacing:.03em}
+.eyebrow svg{width:16px;height:16px;color:var(--rss)}
+.hero h1{font-size:clamp(40px,7vw,76px);line-height:.98;letter-spacing:-.03em;font-weight:700;max-width:14ch}
+.hero h1 em{font-style:normal;color:var(--link);text-decoration:underline;text-decoration-thickness:.06em;text-underline-offset:.1em}
+.lede{font-size:clamp(19px,2.2vw,22px);line-height:1.5;max-width:60ch;margin:22px 0 0}
+.facts{display:flex;flex-wrap:wrap;gap:8px 22px;margin:22px 0 0;padding:0;list-style:none;font-family:var(--mono);font-size:13px;color:var(--muted)}
+
+section{padding-block:36px}
+.sec-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;border-top:2px solid var(--ink);padding-top:14px;margin-bottom:22px}
+.sec-h h2{font-size:clamp(26px,3.4vw,36px);letter-spacing:-.02em;line-height:1.1}
+.sec-h p{margin:0;color:var(--muted);font-size:16px;max-width:52ch}
+
+.phones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+@media (max-width:1100px){.phones{grid-template-columns:1fr;max-width:420px;margin:0 auto}}
+.phone-col{margin:0;display:flex;flex-direction:column;gap:14px;min-width:0}
+.plabel{display:flex;flex-direction:column;gap:2px}
+.plabel .mono{color:var(--muted)}
+.plabel h3{font-size:30px;letter-spacing:-.02em;line-height:1.05}
+.plabel p{margin:0;font-family:var(--display);font-weight:500;color:var(--muted);font-size:17px}
+.phone{width:100%;max-width:360px;aspect-ratio:360/740;max-height:780px;margin:0 auto;border:10px solid var(--bezel);border-radius:42px;overflow:hidden;background:var(--bezel);box-shadow:0 1px 0 var(--line),0 24px 50px -24px rgba(0,0,0,.45)}
+.phone iframe{display:block;width:100%;height:100%;border:0;border-radius:32px;background:var(--surface)}
+.pitch{margin:0;font-size:16.5px}
+.open{font-family:var(--mono);font-size:13px;font-weight:500}
+.try{margin:0;padding-left:18px;font-size:15.5px;color:var(--muted)}
+.try li{margin:3px 0}
+
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:15.5px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:12px 14px;border-bottom:1px solid var(--line)}
+thead th{font-family:var(--display);font-size:18px;background:var(--tint);border-bottom:2px solid var(--ink)}
+thead th small{display:block;font-family:var(--mono);font-size:11.5px;font-weight:400;color:var(--muted);letter-spacing:.03em}
+tbody th{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);width:150px}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px}
+@media (max-width:820px){.split{grid-template-columns:1fr;gap:12px}}
+.shared{list-style:none;margin:0;padding:0}
+.shared li{padding:12px 0;border-bottom:1px solid var(--line);font-size:16.5px}
+.shared li b{font-family:var(--display);font-size:17px;display:block}
+.rec{background:var(--tint);border-left:4px solid var(--link);padding:18px 20px;font-size:17px}
+.rec p{margin:0 0 12px}
+.rec p:last-child{margin:0}
+
+.names{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px}
+.names li{background:var(--surface);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.names .word{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:-.03em;line-height:1}
+.names .url{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.names p{margin:0;font-size:15.5px}
+.names .tag{align-self:flex-start;font-family:var(--mono);font-size:11.5px;padding:2px 8px;background:var(--tint);color:var(--link);margin-top:auto}
+.note{font-size:15px;color:var(--muted);margin:16px 0 0;max-width:72ch}
+.foot{padding-block:28px 56px;border-top:1px solid var(--line);color:var(--muted);font-size:15px}
+.foot p{margin:0 0 6px;max-width:72ch}
+</style>
+
+<header class="wrap hero">
+  <p class="eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="18" r="2" fill="currentColor"/><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/></svg>Concept prototypes · November 2026</p>
+  <h1>Follow <em>websites</em>, not accounts.</h1>
+  <p class="lede">A mobile feed for the open web. You follow sites instead of profiles. When a site publishes, its RSS post lands in your feed, and you can comment on it, repost it and follow the people you meet there. The goal is to give people a reason to leave the big platforms without losing the news outlets, shows, bands and brands they follow there.</p>
+  <ul class="facts"><li>3 working prototypes</li><li>3 social models</li><li>5 name ideas</li><li>All sites and people are made up</li></ul>
+</header>
+
+<section class="wrap">
+  <div class="sec-h"><h2>Three prototypes</h2><p>Every button works. Each one uses a different name idea, so you can see three of the five in context. Names and social models can be mixed freely.</p></div>
+  <div class="phones">
+    <figure class="phone-col">
+      <div class="plabel"><span class="mono">Option A</span><h3>Commons</h3><p>The open square</p></div>
+      <div class="phone"><iframe src="option-a-commons.html" title="Commons prototype"></iframe></div>
+      <p class="pitch">Closest to X and Threads, so switching feels easy. A chronological timeline of site posts and reposts from people you follow, with likes, quote reposts and public comment threads where verified publishers can reply.</p>
+      <ul class="try"><li>Open the bus lanes story and reply to a comment</li><li>Discover: paste <span class="mono">@nightdesk</span> to see handle-to-feed lookup</li><li>Profile: tap Customize</li></ul>
+      <a class="open" href="option-a-commons.html" target="_blank" rel="noopener">Open Commons full screen ↗</a>
+    </figure>
+    <figure class="phone-col">
+      <div class="plabel"><span class="mono">Option B</span><h3>Tidepool</h3><p>Curators and margin notes</p></div>
+      <div class="phone"><iframe src="option-b-tidepool.html" title="Tidepool prototype"></iframe></div>
+      <p class="pitch">A twice-daily edition instead of an endless feed. No likes and no follower counts. People pass posts along with a required note, collect them into public pools, and leave margin notes on specific paragraphs.</p>
+      <ul class="try"><li>Open the Low Orbit issue and tap a paragraph</li><li>Pass something along without a note (you can't)</li><li>Homepage: Edit, then try the CSS box</li></ul>
+      <a class="open" href="option-b-tidepool.html" target="_blank" rel="noopener">Open Tidepool full screen ↗</a>
+    </figure>
+    <figure class="phone-col">
+      <div class="plabel"><span class="mono">Option C</span><h3>Porchlight</h3><p>Porches and webrings</p></div>
+      <div class="phone"><iframe src="option-c-porchlight.html" title="Porchlight prototype"></iframe></div>
+      <p class="pitch">Small and private. Conversations happen on porches, invite-only groups of up to 50. You hand posts to specific friends, surf webrings site by site, and your profile is a full MySpace page with a guestbook and Top 8.</p>
+      <ul class="try"><li>Rings: Surf the ring, then next ▸</li><li>Post: send a message and also reply on the author's site</li><li>Me: tap Dani in the Top 8 and sign Dani's guestbook</li></ul>
+      <a class="open" href="option-c-porchlight.html" target="_blank" rel="noopener">Open Porchlight full screen ↗</a>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="sec-h"><h2>How the social features differ</h2><p>Same foundation, three answers to “what do people do together around a post?”</p></div>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th scope="col"><span class="mono" style="font-weight:400;color:var(--muted)">Feature</span></th><th scope="col">Commons<small>A · open square</small></th><th scope="col">Tidepool<small>B · curators</small></th><th scope="col">Porchlight<small>C · neighborhoods</small></th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Home feed</th><td>Chronological timeline of site posts and reposts. Filter by Everything, Sites or People. Ends with “You're all caught up.”</td><td>Morning and evening editions, laid out in sections: lead story, passed along, from your sites, in the pools.</td><td>“Since last night” list that ends. Porch conversations about posts show up between site posts.</td></tr>
+        <tr><th scope="row">Reactions</th><td>Likes with public counts</td><td>None. Private weekly stats only you see, including visits you sent to sites.</td><td>None in public. Talk happens on porches.</td></tr>
+        <tr><th scope="row">Sharing</th><td>Repost and quote repost to your followers</td><td>“Pass along” requires a sentence about why. Add posts to pools (public collections).</td><td>“Hand to” specific friends or porches, with an optional note</td></tr>
+        <tr><th scope="row">Comments</th><td>Public threads under each post. Verified publishers reply with a badge.</td><td>Margin notes on specific paragraphs. Visible to everyone, people you read with, or only you.</td><td>Private porch threads. Optional public reply sent back to the author's own site via Webmention.</td></tr>
+        <tr><th scope="row">People</th><td>Follow anyone. Follower counts shown.</td><td>Follow people and their pools. No counts.</td><td>Friends and invite-only porches of up to 50</td></tr>
+        <tr><th scope="row">Discovery</th><td>Starter packs and “sites your people read”</td><td>Pools and blogrolls on homepages</td><td>Webrings you can follow whole or surf with prev and next</td></tr>
+        <tr><th scope="row">Profile</th><td>Background themes, accent color, font, sparkly name, profile song, Top 8 sites, your own blog's posts</td><td>A homepage: zine, scrapbook or index layout, paper, highlighter, a safe CSS box, blogroll</td><td>Full MySpace: tiled backgrounds, glitter names, Top 8 friends, guestbook, visitor counter, 88×31 badges, song</td></tr>
+        <tr><th scope="row">Feels like</th><td>X, Threads, Bluesky</td><td>Are.na, Pocket, Tumblr, a zine</td><td>MySpace, group chats, GeoCities</td></tr>
+        <tr><th scope="row">Best for</th><td>The fastest switch for people leaving X and Instagram</td><td>Readers and curators. Useful even before your friends join.</td><td>Friend groups and hobby communities</td></tr>
+        <tr><th scope="row">Biggest risk</th><td>Drifts back toward engagement chasing and pile-ons</td><td>Less familiar, so slower to grow</td><td>Hard to start if your friends aren't there yet</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="wrap split">
+  <div>
+    <div class="sec-h"><h2>What all three share</h2></div>
+    <ul class="shared">
+      <li><b>Follow any website</b>Paste a URL, or the @handle an outlet uses on Instagram or X. The app finds their own site and its RSS feed.</li>
+      <li><b>No ranking algorithm</b>Posts appear in the order they were published, and the feed ends.</li>
+      <li><b>Reading happens on the site</b>“Read on site” opens the publisher's page, so they get the visit and the ad or subscription revenue.</li>
+      <li><b>Your site is your posting account</b>If you have a blog, its posts show up as yours. No blog? A simple hosted one can come later.</li>
+      <li><b>Publishers can verify</b>A site owner proves ownership and replies with a badge.</li>
+      <li><b>Leave any time</b>Import and export your follows as OPML, the format every RSS reader understands.</li>
+      <li><b>Profiles you can decorate</b>MySpace-style customization that stays on your profile and never touches anyone's feed.</li>
+    </ul>
+  </div>
+  <div>
+    <div class="sec-h"><h2>Recommendation</h2></div>
+    <div class="rec">
+      <p>Launch with <b>Commons</b>' feed and public comments, because familiarity is what gets people to switch. Leave out public like counts, as Tidepool does, so the feed doesn't drift back toward engagement chasing.</p>
+      <p>Add <b>porches</b> and <b>webrings</b> from Porchlight once people have friends on the app. Pools from Tidepool are cheap to add at any point, since they are only saved lists of posts.</p>
+      <p>Whichever model wins, MySpace-style profiles are worth building early. They are the most visible difference from the big platforms and the easiest thing to share.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="sec-h"><h2>Five names</h2><p>Each one points the product in a slightly different direction.</p></div>
+  <ul class="names">
+    <li><span class="word">Commons</span><span class="url">commons.app?</span><p>The open web as shared land instead of a platform's property. Plain and civic, and it sits well next to news outlets and brands.</p><span class="tag">Used in Option A</span></li>
+    <li><span class="word">Tidepool</span><span class="url">tidepool.social?</span><p>New posts wash in with the tide, and each site is its own small ecosystem. A gentle nod to surfing the web.</p><span class="tag">Used in Option B</span></li>
+    <li><span class="word">Porchlight</span><span class="url">porchlight.app?</span><p>A light on means someone is home. Warm and neighborly, and a good fit for small groups.</p><span class="tag">Used in Option C</span></li>
+    <li><span class="word">Webring</span><span class="url">webring.social?</span><p>Brings back the 90s loop of linked sites. People who remember them get it at once, and people who don't get curious.</p></li>
+    <li><span class="word">Guestbook</span><span class="url">guestbook.app?</span><p>Every post becomes a page you can sign. Puts comments and MySpace-era profiles at the center.</p></li>
+  </ul>
+  <p class="note">All five are common words, so other companies probably use some of them. Domains and app-store listings above are guesses and haven't been checked. Run a trademark and app-store search before committing to one.</p>
+</section>
+
+<footer class="wrap foot">
+  <p>Every site, person and post in these prototypes is invented. Profile customizations are saved only in your own browser.</p>
+  <p>Technical architecture, audience and roadmap are in the project README.</p>
+</footer>

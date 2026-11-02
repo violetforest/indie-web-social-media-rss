@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Commons Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Courier+Prime:wght@400;700&family=Gaegu:wght@400;700&display=swap">
+<style>
+/* Layout: one phone-width column. Top bar, scrolling timeline of full-bleed rows, bottom tab bar, bottom sheets for actions. */
+:root{
+  --bg:#F3F6F3; --surface:#FFFFFF; --ink:#131B16; --muted:#5A675F; --line:#DFE6E0;
+  --accent:#1D7649; --accent-ink:#FFFFFF; --accent-soft:#E0EFE5; --heart:#D23A55; --scrim:rgba(8,14,10,.45);
+  --font:"Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C120F; --surface:#131A16; --ink:#E6EDE8; --muted:#8E9E95; --line:#222D27;
+  --accent:#4CC28A; --accent-ink:#04110A; --accent-soft:#15301F; --heart:#FF6A82; --scrim:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C120F; --surface:#131A16; --ink:#E6EDE8; --muted:#8E9E95; --line:#222D27;
+  --accent:#4CC28A; --accent-ink:#04110A; --accent-soft:#15301F; --heart:#FF6A82; --scrim:rgba(0,0,0,.6); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.ic{width:20px;height:20px;flex:none}
+
+.app{position:relative;height:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+@media (min-width:441px){.app{border-inline:1px solid var(--line)}}
+.top{flex:none;display:flex;align-items:center;gap:8px;min-height:54px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.top h1{margin:0;font-size:17px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand{display:flex;align-items:center;gap:8px;font-size:23px;font-weight:800;letter-spacing:-.04em;flex:1}
+.brand svg{width:26px;height:26px;color:var(--accent)}
+.iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:none}
+.iconbtn:hover{background:var(--accent-soft)}
+main{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 9px;font-size:11px;font-weight:600;color:var(--muted);text-align:center}
+.tab .ic{width:24px;height:24px}
+.tab[aria-current="page"]{color:var(--accent)}
+
+.segs{position:sticky;top:0;z-index:2;display:flex;gap:6px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.seg{padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);border:1px solid var(--line)}
+.seg[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.item{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 16px 12px}
+.ctx{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 10px}
+.ctx .ic{width:15px;height:15px}
+.who{display:flex;gap:10px;align-items:center}
+.av,.fav{width:38px;height:38px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px;flex:none}
+.av{border-radius:50%}
+.fav{border-radius:11px}
+.meta{min-width:0;flex:1}
+.meta b{font-size:14.5px;font-weight:700}
+.meta small{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rss{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 7px 1px 5px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.rss .ic{width:11px;height:11px}
+.post-title{display:block;font-size:18px;font-weight:700;line-height:1.25;letter-spacing:-.012em;margin:10px 0 6px;text-wrap:balance}
+.excerpt{margin:0 0 10px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.thumb{display:block;width:100%;max-width:100%;aspect-ratio:16/9;border-radius:12px}
+.qtext{margin:10px 0;font-size:15.5px}
+.embed{border:1px solid var(--line);border-radius:14px;padding:12px}
+.embed .post-title{font-size:16px}
+.embed .thumb{aspect-ratio:2.4/1}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted)}
+.act{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:6px;margin:-6px;border-radius:8px;font-variant-numeric:tabular-nums}
+.act:hover{color:var(--ink)}
+.act.like.on{color:var(--heart)} .act.like.on svg{fill:currentColor}
+.act.rp.on{color:var(--accent)}
+.act.sv.on{color:var(--accent)} .act.sv.on svg{fill:currentColor}
+.act.visit{font-weight:700;color:var(--accent)}
+.end{padding:32px 28px 48px;text-align:center;color:var(--muted)}
+.end strong{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;border-radius:12px;font-weight:700;background:var(--accent);color:var(--accent-ink);white-space:nowrap}
+.btn.block{width:100%}
+.btn.sm{padding:6px 13px;font-size:13px;border-radius:999px}
+.btn.on,.btn.ghost{background:var(--accent-soft);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link{color:var(--accent);font-weight:700}
+
+.article{background:var(--surface);padding:16px;border-bottom:1px solid var(--line)}
+.article h2{font-size:25px;line-height:1.16;letter-spacing:-.025em;margin:16px 0 8px;text-wrap:balance}
+.byline{color:var(--muted);font-size:13px;margin:0 0 14px}
+.article p{margin:14px 0}
+.note{font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.note .ic{width:15px;height:15px;margin-top:2px;color:var(--accent)}
+.pub{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--accent-ink);background:var(--accent);padding:1px 7px 1px 5px;border-radius:999px;margin-left:4px;vertical-align:1px}
+.pub .ic{width:11px;height:11px}
+.statrow{display:flex;gap:18px;color:var(--muted);font-size:13px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.statrow b{color:var(--ink)}
+.cmts{background:var(--surface)}
+.cmts h3{font-size:15px;margin:0;padding:16px 16px 4px;display:flex;justify-content:space-between}
+.cmts h3 small{font-weight:500;color:var(--muted)}
+.cm{display:flex;gap:10px;padding:12px 16px 8px}
+.cm .av{width:32px;height:32px;font-size:13px}
+.cm-body{flex:1;min-width:0}
+.cm-body p{margin:2px 0 6px}
+.cm-name{font-size:13.5px;font-weight:700}
+.cm-name small{font-weight:500;color:var(--muted)}
+.cm-acts{display:flex;gap:18px;font-size:12.5px;color:var(--muted);font-weight:600}
+.cm-acts button{display:inline-flex;gap:4px;align-items:center}
+.cm-acts .ic{width:15px;height:15px}
+.cm-acts .on{color:var(--heart)} .cm-acts .on svg{fill:currentColor}
+.replies{margin-left:58px;border-left:2px solid var(--line)}
+.replies .cm{padding-left:12px}
+.composer{position:sticky;bottom:0;padding:10px 12px;background:var(--surface);border-top:1px solid var(--line)}
+.composer .rto{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin:0 4px 6px}
+.composer .row2{display:flex;gap:8px;align-items:flex-end}
+.composer textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);border-radius:18px;padding:9px 14px;background:var(--bg);height:40px;outline:none}
+.composer textarea:focus{border-color:var(--accent)}
+.sendbtn{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+
+.section{padding:16px}
+.section-h{margin:0;padding:18px 16px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.section .section-h{padding:0 0 10px}
+.search{display:flex;gap:8px}
+.search input{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 12px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.found{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.trail{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:12px}
+.trail span{background:var(--bg);border:1px solid var(--line);padding:2px 9px;border-radius:999px}
+.trail i{font-style:normal}
+.found .latest{font-size:13px;color:var(--muted);margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+.found .latest b{color:var(--ink);font-weight:600}
+.packs{display:grid;grid-auto-flow:column;grid-auto-columns:80%;gap:10px;overflow-x:auto;padding:0 16px 6px;scroll-snap-type:x mandatory}
+.pack{scroll-snap-align:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.pack h4{margin:0;font-size:16px}
+.pack p{margin:0;font-size:13px;color:var(--muted)}
+.pack .favs{display:flex;padding-left:6px}
+.pack .favs .fav{width:30px;height:30px;font-size:13px;margin-left:-6px;border:2px solid var(--surface)}
+.pack .btn{align-self:flex-start;margin-top:4px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.row:first-of-type{border-top:1px solid var(--line)}
+.own{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+
+.notif{display:flex;gap:12px;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.notif .nic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
+.notif .nic .ic{width:17px;height:17px}
+.notif p{margin:0} .notif small{color:var(--muted)}
+
+/* Profile: every --p-* token comes from the owner's chosen theme, on purpose independent of the app theme */
+.prof{min-height:100%;background:var(--p-bg);color:var(--p-ink);font-family:var(--p-font);padding:14px 12px 28px;display:flex;flex-direction:column;gap:12px}
+.pcard{background:var(--p-card);border-radius:16px;padding:14px;border:1px solid var(--p-line);backdrop-filter:blur(4px)}
+.phead{display:flex;gap:14px;align-items:center}
+.pav{width:84px;height:84px;border-radius:22px;display:grid;place-items:center;font-size:34px;font-weight:800;color:var(--p-on);background:linear-gradient(135deg,var(--p-accent),color-mix(in srgb,var(--p-accent) 55%,#fff));flex:none}
+.pname{font-size:25px;font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0}
+.sparkle{background:linear-gradient(90deg,var(--p-accent),#FFC94D,#FF7AC8,#7AD7FF,var(--p-accent));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 5s linear infinite}
+@keyframes shine{to{background-position:300% 0}}
+.pmeta{font-size:13px;opacity:.8;margin:4px 0 0}
+.pstats{display:flex;gap:18px;margin-top:14px;font-size:12.5px;font-variant-numeric:tabular-nums}
+.pstats b{display:block;font-size:18px}
+.pbtns{display:flex;gap:8px;margin-top:14px}
+.pbtn{flex:1;padding:10px;border-radius:11px;font-weight:700;font-size:13.5px;background:var(--p-accent);color:var(--p-on);text-align:center}
+.pbtn.alt{background:transparent;border:1px solid var(--p-line);color:var(--p-ink)}
+.ptitle{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--p-accent)}
+.song{display:flex;align-items:center;gap:12px}
+.playbtn{width:46px;height:46px;border-radius:50%;background:var(--p-accent);color:var(--p-on);display:grid;place-items:center;flex:none}
+.song small{display:block;opacity:.75}
+.eq{display:flex;gap:3px;align-items:flex-end;height:20px;margin-left:auto}
+.eq i{width:4px;height:25%;background:var(--p-accent);border-radius:2px}
+.playing .eq i{animation:eq .8s ease-in-out infinite alternate}
+.playing .eq i:nth-child(2){animation-delay:-.3s}.playing .eq i:nth-child(3){animation-delay:-.6s}.playing .eq i:nth-child(4){animation-delay:-.15s}
+@keyframes eq{from{height:20%}to{height:100%}}
+.top8{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 10px}
+.t8{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;text-align:center;line-height:1.2;min-width:0}
+.t8 .fav{width:100%;height:auto;aspect-ratio:1;border-radius:14px;font-size:22px}
+.t8 span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prof p{margin:0}
+.prow{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--p-line);font-size:13.5px}
+.prow:first-of-type{border-top:0}
+.prow .fav{width:30px;height:30px;font-size:12px;border-radius:8px}
+
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:20}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-radius:20px 20px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:86%;overflow-y:auto;box-shadow:0 -12px 30px rgba(0,0,0,.18);animation:up .22s ease-out}
+.sheet::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 14px}
+@keyframes up{from{transform:translateY(30px);opacity:.4}}
+.sheet h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+.opt{margin:18px 0}
+.opt>span{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:9px}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.sw{width:56px;height:56px;border-radius:14px;border:2px solid var(--line);position:relative}
+.sw span{position:absolute;left:0;right:0;bottom:-18px;font-size:10.5px;text-align:center;color:var(--muted);font-weight:600}
+.swatches.has-labels{row-gap:26px}
+.sw[aria-pressed="true"],.dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.dot{width:34px;height:34px;border-radius:50%}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:7px 13px;border-radius:999px;border:1px solid var(--line);font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.check{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-weight:600}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.field{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);outline:none}
+.field:focus{border-color:var(--accent)}
+textarea.field{resize:vertical;min-height:84px}
+.menu{margin-top:10px}
+.menu button{display:flex;gap:14px;align-items:center;width:100%;padding:14px 2px;font-weight:700;border-top:1px solid var(--line)}
+.menu button small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.toast{position:absolute;left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:11px 14px;border-radius:12px;font-size:13.5px;font-weight:600;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.sparkle,.playing .eq i,.sheet{animation:none}.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top" id="top"></header>
+  <main id="main"></main>
+  <nav class="tabbar" aria-label="Main">
+    <button class="tab" data-act="tab" data-id="home"></button>
+    <button class="tab" data-act="tab" data-id="discover"></button>
+    <button class="tab" data-act="tab" data-id="activity"></button>
+    <button class="tab" data-act="tab" data-id="profile"></button>
+  </nav>
+  <div class="scrim" id="scrim" data-act="closeSheet" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Options" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let n = 0; const uid = () => 'c' + (++n);
+
+const I = {
+  home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
+  bell:'<path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  comment:'<path d="M4 5h16v11H9l-5 4z"/>',
+  repost:'<path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/>',
+  heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  save:'<path d="M6 3h12v18l-6-4-6 4z"/>',
+  ext:'<path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  rss:'<circle cx="6" cy="18" r="2"/><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/>',
+  play:'<path d="M8 5v14l11-7z" fill="currentColor"/>',
+  pause:'<path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/>',
+  check:'<path d="m5 12 5 5 9-10"/>',
+  send:'<path d="M4 12 20 4l-6 16-3-7z"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  brush:'<path d="M14 4l6 6-8 8H6v-6z"/><path d="M4 20h4"/>',
+  quote:'<path d="M7 7h4v4c0 3-2 5-4 6M15 7h4v4c0 3-2 5-4 6"/>'
+};
+const ic = (k, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[k]}</svg>`;
+const LOGO = `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="currentColor"/><circle cx="10" cy="22" r="2.6" fill="#fff"/><path d="M8 14.5a9.5 9.5 0 0 1 9.5 9.5M8 8a16 16 0 0 1 16 16" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`;
+
+/* ---------- Example data: every site, person and post here is invented for the prototype ---------- */
+const SITES = {
+  meridian:{name:'The Meridian Wire',domain:'meridianwire.news',kind:'News',color:'#1D3B6E',letter:'M',handle:'@meridianwire',cadence:'about 30 posts a day',claimed:true},
+  static:{name:'Static & Snow',domain:'staticandsnow.tv',kind:'Film & TV',color:'#7B2D8E',letter:'S',handle:'@staticandsnow',cadence:'about 4 posts a day'},
+  fernhill:{name:'Fernhill Outfitters',domain:'fernhill.co',kind:'Outdoor brand',color:'#2E5E3B',letter:'F',handle:'@fernhill',cadence:'about 2 posts a week',claimed:true},
+  orbit:{name:'Low Orbit',domain:'loworbit.blog',kind:'Space newsletter',color:'#13254A',letter:'L',handle:'@loworbit',cadence:'weekly, on Fridays'},
+  juniper:{name:'Juniper Ruiz',domain:'juniper.garden',kind:'Personal blog',color:'#B45309',letter:'J',cadence:'a few posts a month'},
+  moth:{name:'Moth Radio',domain:'mothradio.band',kind:'Band',color:'#9F1239',letter:'M',handle:'@mothradio',cadence:'a few posts a month'},
+  smallhours:{name:'Small Hours',domain:'smallhours.ink',kind:'Webcomic',color:'#0F766E',letter:'S',cadence:'Mon, Wed and Fri'},
+  kitchen:{name:'Kitchen Table Notes',domain:'kitchentable.recipes',kind:'Recipes',color:'#A16207',letter:'K',cadence:'twice a week'},
+  tram:{name:'Tram Diaries',domain:'tramdiaries.net',kind:'Transit blog',color:'#B91C1C',letter:'T',cadence:'weekly'},
+  garden:{name:'Pocket Garden',domain:'pocketgarden.blog',kind:'Gardening blog',color:'#4D7C0F',letter:'P',cadence:'a few posts a month'},
+  nightdesk:{name:'The Night Desk',domain:'nightdesk.news',kind:'Local news',color:'#334155',letter:'N',handle:'@nightdesk',cadence:'about 8 posts a day'}
+};
+const PEOPLE = {
+  dani:{name:'Dani Okafor',handle:'dani',color:'#D9622B'},
+  theo:{name:'Theo Lindqvist',handle:'theo',color:'#2F6FD6'},
+  marisol:{name:'Marisol Vega',handle:'marisol',color:'#B4235A'},
+  priya:{name:'Priya Kapoor',handle:'priya',color:'#7C3AED'},
+  jun:{name:'Jun Park',handle:'jun',color:'#0E8F80'},
+  me:{name:'Rowan Vale',handle:'rowan',color:'#1D7649'}
+};
+const POSTS = {
+  p1:{site:'meridian',title:'Council approves all-day bus lanes on the Fifth Avenue corridor',excerpt:'The 7–2 vote ends a two-year fight over curb space. Buses on the 14 and 22 lines should run about six minutes faster at rush hour once the paint goes down in March.',author:'Ana Reyes',read:6,ago:'18m',art:['#9CC3E6','#1D3B6E','#F2C14E'],likes:214,reposts:58,comments:41},
+  p2:{site:'juniper',title:"I deleted Instagram for 90 days. Here's what I read instead.",excerpt:"I expected to miss the photos. What I actually missed was knowing when my favorite bakery had a new bread. Turns out they have a blog, and the blog has an RSS feed.",author:'Juniper Ruiz',read:9,ago:'1h',art:['#F6C7A8','#B45309','#FFF1C9'],likes:892,reposts:301,comments:126},
+  p3:{site:'static',title:'Every episode of The Lighthouse Keepers, ranked',excerpt:"Forty-two episodes, three seasons, one infamous fog machine. We argued for a week so you don't have to.",author:'Marcus Bell',read:14,ago:'2h',art:['#3B1A4A','#7B2D8E','#F6E7FF'],likes:340,reposts:77,comments:188},
+  p4:{site:'fernhill',title:'Meet the Ridgeback 40L, our first pack made from retired sailcloth',excerpt:'Each pack uses about 1.2 square meters of old racing sail. No two patterns match, and every pack ships with a tag naming the boat it came from.',author:'The Fernhill team',read:4,ago:'3h',art:['#CFE3D3','#2E5E3B','#F4A259'],likes:96,reposts:12,comments:23},
+  p5:{site:'orbit',title:"Issue 112: The quiet race to put a telescope on the Moon's far side",excerpt:'The far side is the most radio-quiet place in the inner solar system. Three teams want to build there first, and none of them agree on how.',author:'Sol Haddad',read:11,ago:'5h',art:['#0B1530','#5B6B8C','#EDEFF7'],likes:158,reposts:44,comments:31},
+  p6:{site:'moth',title:"'Paper Lanterns' is out now, plus fall tour dates",excerpt:'Our first single in two years. We recorded it in a church hall in one take, and you can hear the radiator clank at 2:41.',author:'Moth Radio',read:2,ago:'7h',art:['#F8B4C4','#9F1239','#FFE4A1'],likes:511,reposts:120,comments:64},
+  p7:{site:'smallhours',title:'Page 214: Ines reaches the coast',excerpt:'New page is up. Thank you for being patient with this chapter, it took longer than any before it.',author:'Ren Takeda',read:1,ago:'9h',art:['#A7E0DA','#0F766E','#FDF6E3'],likes:233,reposts:19,comments:52},
+  p8:{site:'kitchen',title:'One-pan miso butter mushrooms, in 20 minutes',excerpt:"Brown the mushrooms hard, don't crowd the pan, and stir the miso in off the heat so it stays bright.",author:'Hana Ito',read:5,ago:'11h',art:['#F7D79B','#A16207','#FFFFFF'],likes:402,reposts:88,comments:37}
+};
+let FEED = [
+  {t:'post',p:'p1'},
+  {t:'quote',by:'dani',p:'p2',ago:'40m',text:"This is the whole reason I'm here. Read it on her site, the layout is lovely."},
+  {t:'post',p:'p3'},
+  {t:'repost',by:'theo',p:'p5'},
+  {t:'post',p:'p4'},
+  {t:'post',p:'p6'},
+  {t:'repost',by:'priya',p:'p8'},
+  {t:'post',p:'p7'}
+];
+const COMMENTS = {
+  p1:[
+    {id:uid(),by:'theo',text:'Six minutes each way is half an hour a week for me. Finally.',ago:'12m',likes:31,replies:[
+      {id:uid(),by:'site:meridian',name:'Ana Reyes',text:'Reporter here. The March date depends on dry weather for painting, so it could slip a couple of weeks.',ago:'8m',likes:54,replies:[]}
+    ]},
+    {id:uid(),by:'marisol',text:'What happens to deliveries? Do the loading zones move to the side streets?',ago:'10m',likes:12,replies:[]},
+    {id:uid(),by:'jun',text:"The 22 is my whole commute. I'll believe it when I see the paint.",ago:'4m',likes:7,replies:[]}
+  ],
+  p2:[
+    {id:uid(),by:'priya',text:'The bakery part got me. I followed three of my local shops after reading this.',ago:'50m',likes:88,replies:[]},
+    {id:uid(),by:'site:juniper',name:'Juniper Ruiz',text:"Thank you all for reading on the actual site! I'll post the full list of feeds I follow next week.",ago:'32m',likes:140,replies:[]},
+    {id:uid(),by:'marisol',text:"Day 4 of trying this. I didn't know my favorite magazine still had a feed.",ago:'20m',likes:26,replies:[]}
+  ],
+  p6:[
+    {id:uid(),by:'dani',text:'The radiator clank is my favorite part of the song now.',ago:'5h',likes:44,replies:[]},
+    {id:uid(),by:'jun',text:'Is there a Portland date? I only see Seattle.',ago:'3h',likes:9,replies:[
+      {id:uid(),by:'site:moth',name:'Moth Radio',text:"Portland gets announced Friday. It's at a record store, all ages.",ago:'2h',likes:36,replies:[]}
+    ]}
+  ]
+};
+const NOTIFS = [
+  {ic:'check',html:'<b>The Meridian Wire</b> replied to your comment on “Council approves all-day bus lanes…”',ago:'8m'},
+  {ic:'heart',html:'<b>Theo Lindqvist</b> and 11 others liked your comment',ago:'9m'},
+  {ic:'quote',html:'<b>Dani Okafor</b> quoted your repost of “I deleted Instagram for 90 days”',ago:'40m'},
+  {ic:'rss',html:'<b>Moth Radio</b> published “\'Paper Lanterns\' is out now, plus fall tour dates”',ago:'7h'},
+  {ic:'user',html:'<b>Priya Kapoor</b> followed you',ago:'1d'},
+  {ic:'check',html:'<b>Fernhill Outfitters</b> verified their site. Replies from their team now carry a badge.',ago:'2d'}
+];
+const PACKS = [
+  {name:'Morning news',by:'Commons editors',sites:['meridian','nightdesk'],more:4,desc:'Local and world news from outlets that publish full RSS feeds.'},
+  {name:'Indie blogs to start with',by:'Picked by @juniper',sites:['juniper','garden','tram'],more:9,desc:"Personal sites that post a few times a month. Nothing urgent, all good."},
+  {name:'Film & TV',by:'Picked by @dani',sites:['static'],more:7,desc:'Reviews, rankings and long reads about what to watch next.'}
+];
+
+/* ---------- Profile customization ---------- */
+const THEMES = {
+  park:{label:'Park',bg:'radial-gradient(circle at 1px 1px, rgba(29,118,73,.22) 1.2px, transparent 1.6px) 0 0/14px 14px, linear-gradient(#E3F0E7,#F7FAF7)',card:'#FFFFFF',ink:'#132018',line:'rgba(19,32,24,.12)'},
+  midnight:{label:'Midnight',bg:'radial-gradient(1.4px 1.4px at 12px 18px, #fff 50%, transparent 52%) 0 0/58px 58px, radial-gradient(1px 1px at 30px 40px, #C9D2FF 50%, transparent 52%) 0 0/44px 44px, linear-gradient(#0A0F2A,#251A55)',card:'rgba(22,28,70,.88)',ink:'#ECEEFF',line:'rgba(255,255,255,.14)'},
+  bubblegum:{label:'Bubblegum',bg:'repeating-conic-gradient(#FFD3E6 0 25%, #FFF0F6 0 50%) 0 0/28px 28px',card:'#FFFFFF',ink:'#4A1030',line:'rgba(74,16,48,.14)'},
+  static:{label:'Static',bg:'repeating-linear-gradient(0deg, rgba(0,0,0,.07) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 1px, transparent 1px 5px), #D6D6D0',card:'#F6F6F2',ink:'#151515',line:'rgba(0,0,0,.15)'},
+  sunset:{label:'Sunset',bg:'linear-gradient(170deg,#FFA26E 0%,#F2668B 48%,#5B3B8C 100%)',card:'rgba(255,255,255,.9)',ink:'#2A1533',line:'rgba(42,21,51,.12)'}
+};
+const ACCENTS = ['#1D7649','#2F5BEA','#E0457B','#E57A14','#7C3AED','#0F172A'];
+const FONTS = {
+  grotesk:{label:'Grotesk',css:'"Schibsted Grotesk", system-ui, sans-serif'},
+  serif:{label:'Serif',css:'Georgia, "Times New Roman", serif'},
+  type:{label:'Typewriter',css:'"Courier Prime", "Courier New", monospace'},
+  hand:{label:'Handwritten',css:'Gaegu, "Comic Sans MS", cursive'}
+};
+const PROFILE_DEFAULT = {theme:'midnight',accent:'#E0457B',font:'grotesk',sparkle:true,song:true,top8:true,mood:'listening to Paper Lanterns on repeat',about:"Bus rider, moon nerd, mushroom cook. I moved my follows here from three different apps and haven't looked back."};
+let profile = {...PROFILE_DEFAULT};
+try { Object.assign(profile, JSON.parse(localStorage.getItem('commons-profile') || '{}')); } catch (e) {}
+const saveProfile = () => { try { localStorage.setItem('commons-profile', JSON.stringify(profile)); } catch (e) {} };
+
+/* ---------- State ---------- */
+const S = {
+  tab:'home', view:{name:'home'}, filter:'all', scroll:0,
+  follows:new Set(['meridian','static','fernhill','juniper','moth','smallhours','kitchen']),
+  liked:new Set(), reposted:new Set(), saved:new Set(), cLiked:new Set(), extraC:{},
+  playing:false, replyTo:null, q:'', found:null, qid:null
+};
+
+/* ---------- Pieces ---------- */
+function art(p){ const [s,h,u] = p.art;
+  return `background:radial-gradient(circle at 74% 32%, ${u} 0 12%, transparent 12.5%),radial-gradient(130% 70% at 15% 108%, ${h} 0 50%, transparent 50.5%),radial-gradient(110% 60% at 92% 112%, color-mix(in srgb, ${h} 70%, #000) 0 50%, transparent 50.5%),linear-gradient(175deg, ${s}, color-mix(in srgb, ${s} 55%, #fff))`; }
+const fav = k => `<span class="fav" style="background:${SITES[k].color}">${SITES[k].letter}</span>`;
+const av = k => `<span class="av" style="background:${PEOPLE[k].color}">${PEOPLE[k].name[0]}</span>`;
+const followBtn = k => { const on = S.follows.has(k); return `<button class="btn sm ${on ? 'on' : ''}" data-act="follow" data-id="${k}" aria-pressed="${on}">${on ? 'Following' : 'Follow'}</button>`; };
+const count = (id, key, set) => POSTS[id][key] + (set && set.has(id) ? 1 : 0);
+
+function postBlock(id, embed){ const p = POSTS[id], s = SITES[p.site];
+  return `<div class="who">${fav(p.site)}<div class="meta"><b>${esc(s.name)}</b><span class="rss">${ic('rss')}RSS</span><small>${s.domain} · ${p.ago}</small></div>${S.follows.has(p.site) ? '' : followBtn(p.site)}</div>
+  <button class="post-title" data-act="open" data-id="${id}">${esc(p.title)}</button>
+  ${embed ? '' : `<p class="excerpt">${esc(p.excerpt)}</p>`}
+  <button class="thumb" data-act="open" data-id="${id}" style="${art(p)}" aria-label="Open “${esc(p.title)}”"></button>`; }
+
+function actions(id){ const l = S.liked.has(id), r = S.reposted.has(id), sv = S.saved.has(id);
+  return `<div class="actions">
+    <button class="act" data-act="open" data-id="${id}" aria-label="Comments">${ic('comment')}<span>${POSTS[id].comments + (S.extraC[id] || 0)}</span></button>
+    <button class="act rp ${r ? 'on' : ''}" data-act="repost" data-id="${id}" aria-label="Repost">${ic('repost')}<span>${count(id,'reposts',S.reposted)}</span></button>
+    <button class="act like ${l ? 'on' : ''}" data-act="like" data-id="${id}" aria-label="Like" aria-pressed="${l}">${ic('heart')}<span>${count(id,'likes',S.liked)}</span></button>
+    <button class="act sv ${sv ? 'on' : ''}" data-act="save" data-id="${id}" aria-label="Save for later" aria-pressed="${sv}">${ic('save')}</button>
+    <button class="act visit" data-act="visit" data-id="${id}">Visit site ${ic('ext')}</button>
+  </div>`; }
+
+function feedItem(it){
+  if (it.t === 'post') return `<article class="item">${postBlock(it.p)}${actions(it.p)}</article>`;
+  const who = PEOPLE[it.by];
+  if (it.t === 'repost') return `<article class="item"><p class="ctx">${ic('repost')}${it.by === 'me' ? 'You' : esc(who.name)} reposted</p>${postBlock(it.p)}${actions(it.p)}</article>`;
+  return `<article class="item"><div class="who">${av(it.by)}<div class="meta"><b>${esc(who.name)}</b><small>@${who.handle} · ${it.ago}</small></div></div>
+    <p class="qtext">${esc(it.text)}</p><div class="embed">${postBlock(it.p, true)}</div>${actions(it.p)}</article>`;
+}
+
+function commentHTML(c){
+  const site = c.by.startsWith('site:') ? c.by.slice(5) : null;
+  const name = site ? c.name : PEOPLE[c.by].name;
+  const avatar = site ? `<span class="av" style="background:${SITES[site].color};border-radius:9px">${SITES[site].letter}</span>` : av(c.by);
+  const on = S.cLiked.has(c.id);
+  return `<div class="cm">${avatar}<div class="cm-body">
+    <div class="cm-name">${esc(name)}${site ? `<span class="pub">${ic('check')}${esc(SITES[site].name)}</span>` : ''} <small>· ${c.ago}</small></div>
+    <p>${esc(c.text)}</p>
+    <div class="cm-acts"><button data-act="cLike" data-id="${c.id}" class="${on ? 'on' : ''}" aria-label="Like comment" aria-pressed="${on}">${ic('heart')}<span>${c.likes + (on ? 1 : 0)}</span></button><button data-act="reply" data-id="${c.id}">Reply</button></div>
+  </div></div>${c.replies.length ? `<div class="replies">${c.replies.map(commentHTML).join('')}</div>` : ''}`;
+}
+const findC = (arr, id) => { for (const c of arr) { if (c.id === id) return c; const r = findC(c.replies, id); if (r) return r; } };
+function commentsFor(id){
+  if (!COMMENTS[id]) { const s = SITES[POSTS[id].site];
+    COMMENTS[id] = [
+      {id:uid(),by:'marisol',text:`Followed ${s.name} because of this post.`,ago:'40m',likes:6,replies:[]},
+      {id:uid(),by:'jun',text:'Saving this one for the weekend.',ago:'15m',likes:2,replies:[]}
+    ]; }
+  return COMMENTS[id];
+}
+
+/* ---------- Views ---------- */
+function viewHome(){
+  const f = S.filter;
+  const items = FEED.filter(it => f === 'all' || (f === 'sites' ? it.t === 'post' : it.t !== 'post'));
+  return `<div class="segs" role="group" aria-label="Filter the feed">${[['all','Everything'],['sites','Sites'],['people','People']].map(([k,l]) => `<button class="seg" data-act="filter" data-id="${k}" aria-pressed="${f === k}">${l}</button>`).join('')}</div>
+    ${items.map(feedItem).join('')}
+    <div class="end"><strong>You're all caught up</strong>That's everything from your ${S.follows.size} sites and 23 people since yesterday, newest first. No algorithm decides the order.</div>`;
+}
+
+function viewPost(id){
+  const p = POSTS[id], s = SITES[p.site], list = commentsFor(id), r = S.replyTo;
+  return `<article class="article">
+    <div class="who">${fav(p.site)}<div class="meta"><b>${esc(s.name)}</b>${s.claimed ? `<span class="pub">${ic('check')}Verified site</span>` : ''}<small>${s.domain} · ${s.kind}</small></div>${followBtn(p.site)}</div>
+    <h2>${esc(p.title)}</h2>
+    <p class="byline">By ${esc(p.author)} · ${p.read} min read · ${p.ago} ago</p>
+    <div class="thumb" style="${art(p)}"></div>
+    <p>${esc(p.excerpt)}</p>
+    <p class="note">${ic('rss')}<span>This summary comes from ${s.domain}'s RSS feed. The full piece lives on their site, so your visit counts for them.</span></p>
+    <button class="btn block" data-act="visit" data-id="${id}">Read on ${s.domain} ${ic('ext')}</button>
+    ${actions(id)}
+  </article>
+  <div class="statrow"><span><b>${count(id,'reposts',S.reposted)}</b> reposts</span><span><b>${count(id,'likes',S.liked)}</b> likes</span><span><b>${p.comments + (S.extraC[id] || 0)}</b> comments</span></div>
+  <section class="cmts"><h3>Comments <small>Oldest first</small></h3>${list.map(commentHTML).join('')}</section>
+  <form class="composer" id="cform">
+    ${r ? `<div class="rto"><span>Replying to ${esc(r.name)}</span><button type="button" class="link" data-act="cancelReply">Cancel</button></div>` : ''}
+    <div class="row2"><textarea id="ctext" rows="1" placeholder="Add a comment" aria-label="Comment"></textarea><button class="sendbtn" aria-label="Post comment">${ic('send')}</button></div>
+  </form>`;
+}
+
+function foundCard(f){
+  const s = SITES[f.key], latest = Object.values(POSTS).find(p => p.site === f.key);
+  const trail = f.handle
+    ? `<span>${esc(f.handle)} on Instagram and X</span><i>→</i><span>${s.domain}</span><i>→</i><span>RSS feed</span>`
+    : `<span>${s.domain}</span><i>→</i><span>${s.feedPath || '/feed'}</span><i>→</i><span>RSS feed</span>`;
+  return `<div class="found"><div class="trail">${trail}</div>
+    <div class="who">${fav(f.key)}<div class="meta"><b>${esc(s.name)}</b><small>${s.kind} · posts ${s.cadence}</small></div>${followBtn(f.key)}</div>
+    <p class="latest">${latest ? `Latest: <b>${esc(latest.title)}</b>` : `Found 24 recent posts. New ones will show up in Home as ${s.domain} publishes them.`}</p></div>`;
+}
+const siteRow = k => `<div class="row">${fav(k)}<div class="meta"><b>${esc(SITES[k].name)}</b><small>${SITES[k].domain} · ${SITES[k].kind}</small></div>${followBtn(k)}</div>`;
+
+function viewDiscover(){
+  return `<section class="section"><h3 class="section-h">Follow a website</h3>
+    <form class="search" id="lookup"><input id="q" placeholder="Website or @handle" autocomplete="off" value="${esc(S.q)}" aria-label="Website address or social media handle"><button class="btn">Find</button></form>
+    <p class="hint">Paste a web address, or the @handle of an outlet you follow on Instagram or X. Commons finds their own website and its feed. Try <button class="link" data-act="try" data-id="@nightdesk">@nightdesk</button> or <button class="link" data-act="try" data-id="hollowpine.studio">hollowpine.studio</button>.</p>
+    ${S.found ? foundCard(S.found) : ''}
+  </section>
+  <h3 class="section-h">Starter packs</h3>
+  <div class="packs">${PACKS.map((pk,i) => `<div class="pack"><div class="favs">${pk.sites.map(fav).join('')}</div><h4>${esc(pk.name)}</h4><p>${esc(pk.desc)}</p><p>${pk.sites.length + pk.more} sites · ${esc(pk.by)}</p><button class="btn sm" data-act="pack" data-id="${i}">Follow all</button></div>`).join('')}</div>
+  <h3 class="section-h">Sites your people read</h3>
+  ${['orbit','tram','garden','nightdesk'].map(siteRow).join('')}
+  <section class="section"><h3 class="section-h">Bring your list, take your list</h3>
+    <p class="hint" style="margin:0">Your follows are yours. Import them from another reader, or export them any time as an OPML file that works in any RSS app.</p>
+    <div class="own"><button class="btn sm ghost" data-act="toastMsg" data-id="Choose an .opml file to import. (Prototype: nothing is uploaded.)">Import OPML</button><button class="btn sm ghost" data-act="toastMsg" data-id="Your ${S.follows.size} sites would download as commons-follows.opml">Export OPML</button></div>
+  </section>`;
+}
+
+const viewActivity = () => NOTIFS.map(x => `<div class="notif"><span class="nic">${ic(x.ic)}</span><div><p>${x.html}</p><small>${x.ago} ago</small></div></div>`).join('')
+  + `<div class="end">Commons never sends you a notification to get you back into the app. Only replies, mentions and new followers show up here.</div>`;
+
+function viewProfile(){
+  const t = THEMES[profile.theme], P = PEOPLE.me, mine = FEED.filter(it => it.by === 'me');
+  const style = `--p-bg:${t.bg};--p-card:${t.card};--p-ink:${t.ink};--p-line:${t.line};--p-accent:${profile.accent};--p-on:#fff;--p-font:${FONTS[profile.font].css}`;
+  return `<div class="prof" style='${style}'>
+    <div class="pcard">
+      <div class="phead"><div class="pav">R</div><div style="min-width:0">
+        <h2 class="pname ${profile.sparkle ? 'sparkle' : ''}">${esc(P.name)}</h2>
+        <p class="pmeta">@${P.handle} · rowan.blog</p>
+        <p class="pmeta">Mood: ${esc(profile.mood)}</p>
+      </div></div>
+      <div class="pstats"><span><b>${S.follows.size}</b>sites</span><span><b>112</b>following</span><span><b>230</b>followers</span></div>
+      <div class="pbtns"><button class="pbtn" data-act="customize">${'Customize'}</button><button class="pbtn alt" data-act="toastMsg" data-id="Your profile link is copied: commons.example/@rowan">Share profile</button></div>
+    </div>
+    ${profile.song ? `<div class="pcard song ${S.playing ? 'playing' : ''}"><button class="playbtn" data-act="play" aria-label="${S.playing ? 'Pause' : 'Play'} profile song">${ic(S.playing ? 'pause' : 'play')}</button><div><b>Paper Lanterns</b><small>Moth Radio · via mothradio.band</small></div><div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>` : ''}
+    <div class="pcard"><p class="ptitle">About me</p><p>${esc(profile.about)}</p></div>
+    ${profile.top8 ? `<div class="pcard"><p class="ptitle">Rowan's top 8 sites</p><div class="top8">${['juniper','orbit','moth','kitchen','meridian','smallhours','tram','static'].map(k => `<div class="t8">${fav(k)}<span>${esc(SITES[k].name)}</span></div>`).join('')}</div></div>` : ''}
+    <div class="pcard"><p class="ptitle">From my own site</p><p style="font-size:13.5px;opacity:.85;margin-bottom:8px">Posts from rowan.blog appear here and in my followers' feeds automatically.</p>
+      <div class="prow"><span class="fav" style="background:${profile.accent}">R</span><span>Notes from riding every night bus in the city</span></div>
+      <div class="prow"><span class="fav" style="background:${profile.accent}">R</span><span>My OPML file, annotated</span></div></div>
+    <div class="pcard"><p class="ptitle">Recently shared</p>
+      ${(mine.length ? mine : [{p:'p2'},{p:'p5'}]).map(it => `<div class="prow">${fav(POSTS[it.p].site)}<span>${esc(POSTS[it.p].title)}</span></div>`).join('')}</div>
+  </div>`;
+}
+
+function customizeHTML(){
+  return `<h2>Customize your profile</h2><p class="hint" style="margin:0">Only your profile changes. Everyone's feed stays easy to read.</p>
+  <div class="opt"><span>Background</span><div class="swatches has-labels">${Object.entries(THEMES).map(([k,t]) => `<button class="sw" data-act="pTheme" data-id="${k}" aria-pressed="${profile.theme === k}" style="background:${t.bg}" aria-label="${t.label}"><span>${t.label}</span></button>`).join('')}</div></div>
+  <div class="opt"><span>Accent color</span><div class="swatches">${ACCENTS.map(c => `<button class="dot" data-act="pAccent" data-id="${c}" aria-pressed="${profile.accent === c}" style="background:${c}" aria-label="Accent ${c}"></button>`).join('')}</div></div>
+  <div class="opt"><span>Font</span><div class="chips">${Object.entries(FONTS).map(([k,f]) => `<button class="chip" data-act="pFont" data-id="${k}" aria-pressed="${profile.font === k}" style="font-family:${f.css.replace(/"/g,"'")}">${f.label}</button>`).join('')}</div></div>
+  <div class="opt"><span>Sections</span>
+    <label class="check" for="t-sparkle">Sparkly name<input type="checkbox" id="t-sparkle" data-pt="sparkle" ${profile.sparkle ? 'checked' : ''}></label>
+    <label class="check" for="t-song">Profile song<input type="checkbox" id="t-song" data-pt="song" ${profile.song ? 'checked' : ''}></label>
+    <label class="check" for="t-top8">Top 8 sites<input type="checkbox" id="t-top8" data-pt="top8" ${profile.top8 ? 'checked' : ''}></label>
+  </div>
+  <div class="opt"><span><label for="p-mood">Mood</label></span><input class="field" id="p-mood" data-pf="mood" value="${esc(profile.mood)}" maxlength="60"></div>
+  <div class="opt"><span><label for="p-about">About me</label></span><textarea class="field" id="p-about" data-pf="about" maxlength="300">${esc(profile.about)}</textarea></div>
+  <div style="display:flex;gap:8px"><button class="btn ghost" data-act="pReset">Reset</button><button class="btn block" data-act="closeSheet">Done</button></div>`;
+}
+
+/* ---------- Render ---------- */
+const TABS = {home:['home','Home'],discover:['compass','Discover'],activity:['bell','Activity'],profile:['user','Profile']};
+function topbar(v){
+  if (v.name === 'post') return `<button class="iconbtn" data-act="back" aria-label="Back">${ic('back')}</button><h1>${esc(SITES[POSTS[v.id].site].name)}</h1>`;
+  if (v.name === 'home') return `<div class="brand">${LOGO}Commons</div><button class="iconbtn" data-act="tab" data-id="discover" aria-label="Follow a website">${ic('plus')}</button>`;
+  if (v.name === 'profile') return `<h1>@rowan</h1><button class="iconbtn" data-act="customize" aria-label="Customize profile">${ic('brush')}</button>`;
+  return `<h1>${TABS[v.name][1]}</h1>`;
+}
+function render(keep){
+  const main = $('#main'), y = main.scrollTop, v = S.view;
+  $('#top').innerHTML = topbar(v);
+  main.innerHTML = ({home:viewHome, discover:viewDiscover, activity:viewActivity, profile:viewProfile, post:() => viewPost(v.id)})[v.name]();
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-current', t.dataset.id === S.tab ? 'page' : 'false'));
+  main.scrollTop = keep ? y : 0;
+}
+document.querySelectorAll('.tab').forEach(t => { const [i,l] = TABS[t.dataset.id]; t.innerHTML = ic(i) + l; });
+
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+function openSheet(html){ $('#sheet').innerHTML = html; $('#sheet').hidden = false; $('#scrim').hidden = false; }
+function closeSheet(){ $('#sheet').hidden = true; $('#scrim').hidden = true; S.sheet = null; }
+function refreshSheet(){ if (S.sheet === 'customize') { const sh = $('#sheet'), y = sh.scrollTop; sh.innerHTML = customizeHTML(); sh.scrollTop = y; } }
+const toggle = (set, id) => set.has(id) ? set.delete(id) : set.add(id);
+
+function lookup(raw){
+  const q = raw.trim(); if (!q) return null;
+  let handle = null, dom = q.toLowerCase().replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/[\/?#].*$/,'');
+  if (q.startsWith('@')) {
+    handle = q.toLowerCase().replace(/[^@a-z0-9_.]/g,'');
+    const k = Object.keys(SITES).find(k => SITES[k].handle === handle);
+    if (k) return {key:k, handle};
+    dom = handle.slice(1).replace(/[^a-z0-9-]/g,'') + '.com';
+  }
+  if (!dom.includes('.')) dom += '.com';
+  const k = Object.keys(SITES).find(k => SITES[k].domain === dom);
+  if (k) return {key:k, handle};
+  const key = 'x_' + dom.replace(/[^a-z0-9]/g,''), base = dom.split('.')[0] || 'site';
+  if (!SITES[key]) SITES[key] = {name:base.replace(/[-_]/g,' ').replace(/\b\w/g, c => c.toUpperCase()), domain:dom, kind:'Website', color:['#0E7490','#9333EA','#C2410C','#15803D','#BE123C'][dom.length % 5], letter:base[0].toUpperCase(), cadence:'about 3 times a week', feedPath:'/feed.xml'};
+  return {key, handle};
+}
+
+const H = {
+  tab(id){ S.tab = id; S.view = {name:id}; S.replyTo = null; render(); },
+  open(id){ S.scroll = $('#main').scrollTop; S.from = S.view; S.view = {name:'post', id}; S.replyTo = null; render(); },
+  back(){ S.view = S.from || {name:S.tab}; render(); $('#main').scrollTop = S.scroll; },
+  filter(id){ S.filter = id; render(); },
+  like(id){ toggle(S.liked, id); render(true); },
+  save(id){ toggle(S.saved, id); render(true); toast(S.saved.has(id) ? 'Saved to Read later' : 'Removed from Read later'); },
+  visit(id){ toast(`Opens ${SITES[POSTS[id].site].domain} in an in-app browser. Commons never copies the full article.`); },
+  follow(id){ toggle(S.follows, id); render(true); toast(S.follows.has(id) ? `Following ${SITES[id].name}. New posts land in Home.` : `Unfollowed ${SITES[id].name}`); },
+  pack(i){ const pk = PACKS[i]; pk.sites.forEach(k => S.follows.add(k)); render(true); toast(`Following ${pk.sites.length} sites from ${pk.name}`); },
+  try(id){ S.q = id; S.found = lookup(id); render(true); },
+  repost(id){ S.qid = id; S.sheet = 'repost'; const r = S.reposted.has(id), s = SITES[POSTS[id].site];
+    openSheet(`<h2>Share this post</h2><p class="hint" style="margin:0">${esc(POSTS[id].title)}</p><div class="menu">
+      <button data-act="doRepost" data-id="${id}">${ic('repost')}<span>${r ? 'Undo repost' : 'Repost'}<small>Show it to the people who follow you</small></span></button>
+      <button data-act="quote" data-id="${id}">${ic('quote')}<span>Quote<small>Add your own take on top</small></span></button>
+      <button data-act="copy" data-id="${id}">${ic('link')}<span>Copy link to the original<small>${s.domain}</small></span></button></div>`); },
+  doRepost(id){ closeSheet(); if (S.reposted.has(id)) { S.reposted.delete(id); FEED = FEED.filter(it => !(it.by === 'me' && it.p === id)); toast('Repost removed'); }
+    else { S.reposted.add(id); FEED.unshift({t:'repost', by:'me', p:id}); toast('Reposted to your followers'); } render(true); },
+  quote(id){ S.sheet = 'quote'; openSheet(`<h2>Quote</h2><form id="qform"><textarea class="field" id="qtext" placeholder="What do you think?" maxlength="280" aria-label="Your quote"></textarea><div class="embed" style="margin:12px 0">${postBlock(id, true)}</div><button class="btn block">Post quote</button></form>`); setTimeout(() => $('#qtext')?.focus(), 50); },
+  copy(id){ const s = SITES[POSTS[id].site], url = `https://${s.domain}/${POSTS[id].title.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,40)}`;
+    closeSheet(); (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast('Link to the original copied'), () => toast(url)); },
+  cLike(id){ toggle(S.cLiked, id); render(true); },
+  reply(id){ const c = findC(COMMENTS[S.view.id], id); const site = c.by.startsWith('site:'); S.replyTo = {id, name: site ? c.name : PEOPLE[c.by].name}; render(true); $('#ctext').focus(); },
+  cancelReply(){ S.replyTo = null; render(true); },
+  play(){ S.playing = !S.playing; render(true); },
+  customize(){ if (S.view.name !== 'profile') { S.tab = 'profile'; S.view = {name:'profile'}; render(); } S.sheet = 'customize'; openSheet(customizeHTML()); },
+  pTheme(id){ profile.theme = id; saveProfile(); render(true); refreshSheet(); },
+  pAccent(id){ profile.accent = id; saveProfile(); render(true); refreshSheet(); },
+  pFont(id){ profile.font = id; saveProfile(); render(true); refreshSheet(); },
+  pReset(){ profile = {...PROFILE_DEFAULT}; saveProfile(); render(true); refreshSheet(); },
+  toastMsg(_, el){ toast(el.dataset.id); },
+  closeSheet
+};
+document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const h = H[el.dataset.act]; if (h) { e.preventDefault(); h(el.dataset.id, el); } });
+document.addEventListener('change', e => { const k = e.target.dataset.pt; if (k) { profile[k] = e.target.checked; saveProfile(); render(true); } });
+document.addEventListener('input', e => { const k = e.target.dataset.pf; if (k) { profile[k] = e.target.value; saveProfile(); render(true); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.id === 'cform') { const t = $('#ctext').value.trim(); if (!t) return; const id = S.view.id, c = {id:uid(), by:'me', text:t, ago:'now', likes:0, replies:[]};
+    if (S.replyTo) findC(COMMENTS[id], S.replyTo.id).replies.push(c); else COMMENTS[id].push(c);
+    S.extraC[id] = (S.extraC[id] || 0) + 1; S.replyTo = null; render(true); toast('Comment posted'); }
+  if (f.id === 'lookup') { S.q = $('#q').value; S.found = lookup(S.q); render(true); }
+  if (f.id === 'qform') { const t = $('#qtext').value.trim(); if (!t) return; FEED.unshift({t:'quote', by:'me', p:S.qid, ago:'now', text:t}); S.reposted.add(S.qid); closeSheet(); S.tab = 'home'; S.filter = 'all'; S.view = {name:'home'}; render(); toast('Quote posted to your followers'); }
+});
+render();
+</script>
+</body>
+</html>

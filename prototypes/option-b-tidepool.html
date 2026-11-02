@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tidepool Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@500;700&display=swap">
+<style>
+/* Layout: a printed edition on a phone. Masthead, ruled sections, text-only tab bar. One deliberate light "paper" look, so no dark variant. */
+:root{
+  --paper:#E9EFEB; --sheet:#F6F9F7; --ink:#12233B; --muted:#56667B; --rule:#C3D1CA;
+  --hl:#F27A63; --hl-soft:rgba(242,122,99,.30); --sea:#22626A; --scrim:rgba(18,35,59,.42);
+  --display:"Young Serif", Georgia, serif; --body:"Newsreader", Georgia, serif; --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:17px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+:focus-visible{outline:2px solid var(--sea);outline-offset:2px}
+[hidden]{display:none!important}
+.mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
+
+.app{position:relative;height:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;background:var(--paper);overflow:hidden}
+@media (min-width:441px){.app{border-inline:1px solid var(--rule)}}
+main{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 4px) 18px 32px}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--ink);background:var(--paper);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tab{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;text-align:center;padding:14px 0 15px;color:var(--muted);position:relative}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"]::after{content:"";position:absolute;left:22%;right:22%;bottom:9px;height:3px;background:var(--hl)}
+
+.mast{padding:10px 0 12px;border-bottom:3px double var(--ink);margin-bottom:6px}
+.mast-row{display:flex;justify-content:space-between;align-items:center;color:var(--muted)}
+.wordmark{font-family:var(--display);font-weight:400;font-size:50px;line-height:1;letter-spacing:-.02em;margin:8px 0 6px}
+.wordmark span{color:var(--hl)}
+.mast .dek{margin:0;color:var(--muted)}
+.textbtn{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--sea);display:inline-flex;gap:5px;align-items:center;padding:4px 0}
+.textbtn:hover{text-decoration:underline;text-underline-offset:3px}
+.textbtn.on{color:var(--hl)}
+.rubric{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin:26px 0 0;padding:6px 0;border-top:1px solid var(--ink);border-bottom:1px solid var(--rule);display:flex;justify-content:space-between}
+.rubric small{font-weight:400;color:var(--muted);letter-spacing:.04em}
+
+.kicker{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sea);margin:0}
+.kicker i{font-style:normal;color:var(--muted);font-weight:400}
+.lead{padding:16px 0 4px}
+.lead h2{font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;letter-spacing:-.01em;margin:8px 0 10px;text-wrap:balance}
+.lead h2 button,.c-row h3 button,.pick h3 button{text-align:left;line-height:inherit}
+.lead p.dek{margin:0 0 14px;color:var(--muted)}
+.art{display:block;width:100%;max-width:100%;aspect-ratio:3/2;filter:saturate(.8) contrast(1.05)}
+.cap{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin:6px 0 0;letter-spacing:.02em}
+.acts{display:flex;flex-wrap:wrap;gap:6px 18px;padding:12px 0 2px}
+
+.pass{padding:16px 0;border-bottom:1px solid var(--rule)}
+.byl{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.ini{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--sheet);flex:none}
+.pnote{font-style:italic;font-size:19px;line-height:1.4;margin:10px 0 12px;padding-left:14px;border-left:3px solid var(--hl)}
+.pick{display:grid;grid-template-columns:1fr 84px;gap:12px;align-items:start;background:var(--sheet);padding:12px;border:1px solid var(--rule)}
+.pick h3{font-family:var(--display);font-weight:400;font-size:18px;line-height:1.2;margin:4px 0 0}
+.pick .art{aspect-ratio:1}
+
+.c-row{display:grid;grid-template-columns:1fr 76px;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.c-row h3{font-family:var(--display);font-weight:400;font-size:19px;line-height:1.2;margin:5px 0 4px;text-wrap:balance}
+.c-row p{margin:0;font-size:15px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.c-row .art{aspect-ratio:1}
+.c-row .meta{display:flex;gap:10px;margin-top:6px;color:var(--muted)}
+.notes-flag{color:var(--hl)!important}
+
+.pupdate{display:flex;gap:12px;align-items:center;padding:14px 0;width:100%}
+.minis{display:grid;grid-template-columns:repeat(3,38px);gap:3px;flex:none}
+.minis span{aspect-ratio:1}
+.pupdate .px{font-size:16px}
+.edition-end{text-align:center;margin:30px 0 8px;padding:18px 8px;border-top:3px double var(--ink)}
+.edition-end p{margin:4px 0 12px;color:var(--muted);font-size:15px}
+.fleuron{font-family:var(--display);font-size:22px;color:var(--hl)}
+
+.backrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--rule)}
+.reader h1{font-family:var(--display);font-weight:400;font-size:32px;line-height:1.1;margin:12px 0 8px;text-wrap:balance}
+.reader .byline{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.03em;margin:0 0 16px}
+.body{margin-top:18px}
+.body p{margin:0 0 6px;padding:6px 10px 6px 12px;margin-left:-12px;border-left:3px solid transparent;cursor:text;border-radius:0 4px 4px 0}
+.body p:hover{background:rgba(255,255,255,.5)}
+.body p.noted{border-left-color:var(--hl)}
+mark{background:linear-gradient(transparent 35%, var(--hl-soft) 35%);color:inherit;padding:0 1px}
+.margin{margin:2px 0 14px 14px;display:flex;flex-direction:column;gap:8px}
+.mnote{font-size:14.5px;line-height:1.4;display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:start}
+.mnote b{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;display:block;color:var(--muted)}
+.tip{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.02em;border:1px dashed var(--rule);padding:8px 10px;margin:14px 0}
+.feednote{font-size:14px;color:var(--muted);font-style:italic;margin:18px 0 12px}
+.cta{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;padding:14px;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.cta.alt{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.cta[disabled]{opacity:.4;cursor:not-allowed}
+.inpools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pchip{font-family:var(--mono);font-size:11.5px;padding:5px 10px;border:1px solid var(--ink);background:var(--sheet)}
+
+.page-h h1{font-family:var(--display);font-weight:400;font-size:40px;line-height:1;margin:14px 0 8px}
+.page-h p{margin:0 0 4px;color:var(--muted);font-size:16px}
+.pool-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;padding-top:14px}
+.pool{display:flex;flex-direction:column;gap:6px;min-width:0}
+.collage{display:grid;grid-template-columns:1fr 1fr;gap:2px;aspect-ratio:1;max-width:100%;background:var(--rule);border:1px solid var(--ink)}
+.collage span{min-height:0}
+.pool .pt{display:block;font-family:var(--display);font-weight:400;font-size:18px;line-height:1.15;margin:4px 0 0}
+.pool .mono{color:var(--muted);font-size:10.5px}
+.pool-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.pool-item h3{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.2;margin:5px 0 8px}
+.cnote{font-style:italic;margin:0;padding-left:12px;border-left:3px solid var(--hl);font-size:16px}
+
+.log{padding:14px 0;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:52px 1fr;gap:10px}
+.log .mono{color:var(--muted);padding-top:3px}
+.log p{margin:0;font-size:16px}
+.ledger{margin-top:22px;border:1.5px solid var(--ink);background:var(--sheet)}
+.ledger h3{margin:0;padding:8px 12px;border-bottom:1px solid var(--ink)}
+.ledger dl{margin:0;display:grid;grid-template-columns:1fr auto;font-variant-numeric:tabular-nums}
+.ledger dt,.ledger dd{margin:0;padding:9px 12px;border-bottom:1px solid var(--rule)}
+.ledger dd{font-family:var(--display);font-size:20px;text-align:right}
+.ledger dt:nth-last-of-type(1),.ledger dd:last-of-type{border-bottom:0}
+.ledger p{margin:0;padding:10px 12px;font-size:14px;color:var(--muted);border-top:1px solid var(--ink)}
+
+/* Homepage: --hp-* tokens are the owner's choices; they style only this page */
+.hp{margin:6px -18px -32px;min-height:calc(100% + 32px);padding:20px 18px 40px;background:var(--hp-paper);color:var(--hp-ink);font-family:var(--hp-body)}
+.hp .blk{margin-top:22px}
+.hp h1{font-family:var(--hp-display);font-weight:400;font-size:46px;line-height:.98;margin:6px 0 10px;letter-spacing:-.01em}
+.hp .tag{margin:0;font-size:16px;opacity:.8}
+.hp .lbl{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin:0 0 8px;opacity:.75}
+.hp .reading{font-size:17px;margin:0}
+.hp .reading mark{background:linear-gradient(transparent 40%, color-mix(in srgb,var(--hp-hl) 45%, transparent) 40%)}
+.hp ul{list-style:none;margin:0;padding:0}
+.hp .roll li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid color-mix(in srgb,var(--hp-ink) 18%, transparent);font-size:16px}
+.hp .roll span{font-family:var(--mono);font-size:12px;opacity:.7;white-space:nowrap}
+.hp .hpools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hp .hpool{padding:12px;border:1.5px solid var(--hp-ink);border-radius:var(--hp-radius);font-family:var(--hp-display);font-size:18px;line-height:1.15}
+.hp .hpool small{display:block;font-family:var(--mono);font-size:10.5px;opacity:.7;margin-top:6px}
+.hp .hnote{font-size:16px;margin:0 0 12px;padding-left:12px;border-left:3px solid var(--hp-hl)}
+.hp .hnote i{display:block;opacity:.75;font-size:14.5px}
+.hp .editbtn{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border:1.5px solid var(--hp-ink);border-radius:var(--hp-radius);background:transparent;color:var(--hp-ink)}
+.hp[data-layout="zine"] h1{font-size:58px}
+.hp[data-layout="zine"] .blk{border-top:4px solid var(--hp-ink);padding-top:10px}
+.hp[data-layout="scrapbook"] .blk{background:color-mix(in srgb,#fff 55%, var(--hp-paper));color:#1d1d1d;padding:14px;border-radius:var(--hp-radius);box-shadow:0 6px 14px rgba(0,0,0,.14);transform:rotate(var(--hp-tilt));position:relative}
+.hp[data-layout="scrapbook"] .blk:nth-of-type(even){transform:rotate(calc(var(--hp-tilt) * -1))}
+.hp[data-layout="scrapbook"] .blk::before{content:"";position:absolute;top:-9px;left:50%;width:70px;height:18px;margin-left:-35px;background:color-mix(in srgb,var(--hp-hl) 55%, transparent);transform:rotate(-3deg)}
+.hp[data-layout="scrapbook"] .blk .hpool{border-color:#1d1d1d}
+.hp[data-layout="index"]{font-family:var(--mono);font-size:14px}
+.hp[data-layout="index"] h1{font-family:var(--mono);font-size:26px;font-weight:600}
+.hp[data-layout="index"] h1::before{content:"~"}
+.hp[data-layout="index"] .hpools{display:block}
+.hp[data-layout="index"] .hpool{border:0;padding:3px 0;font-family:var(--mono);font-size:14px;text-decoration:underline;text-underline-offset:3px}
+.hp[data-layout="index"] .hpool small{display:inline;margin-left:6px}
+.hp[data-layout="index"] .hpool::before{content:"→ "}
+
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:20}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--sheet);border-top:3px solid var(--ink);padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px));max-height:86%;overflow-y:auto;animation:up .22s ease-out;box-shadow:0 -10px 30px rgba(18,35,59,.2)}
+@keyframes up{from{transform:translateY(30px);opacity:.4}}
+.sheet h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 6px}
+.sheet .sub{margin:0 0 12px;color:var(--muted);font-size:15px}
+.quoted{font-style:italic;border-left:3px solid var(--hl);padding-left:12px;margin:0 0 12px;color:var(--muted);font-size:15.5px}
+.field{width:100%;border:1.5px solid var(--ink);background:#fff;padding:10px 12px;font-size:16px;outline:none;border-radius:0}
+.field:focus{border-color:var(--sea)}
+textarea.field{min-height:96px;resize:vertical}
+.opt{margin:16px 0}
+.opt>.mono{display:block;margin-bottom:8px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--mono);font-size:12px;padding:7px 11px;border:1.5px solid var(--ink);background:transparent}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.sw{width:52px;height:52px;border:1.5px solid var(--ink);position:relative;display:grid;place-items:center;font-family:var(--display);font-size:20px}
+.sw[aria-pressed="true"],.hlsw[aria-pressed="true"]{outline:3px solid var(--hl);outline-offset:2px}
+.hlsw{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--ink)}
+.counter{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;margin:4px 0 12px}
+.poolcheck{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--rule);font-size:17px}
+.poolcheck input{width:20px;height:20px;accent-color:var(--hl)}
+.row{display:flex;gap:8px;margin-top:12px}
+.row .field{flex:1;min-width:0}
+.found{margin-top:14px;border:1.5px solid var(--ink);padding:12px;background:#fff}
+.found h3{font-family:var(--display);font-weight:400;font-size:21px;margin:4px 0}
+.found p{margin:0 0 10px;font-size:15px;color:var(--muted)}
+.trail{font-family:var(--mono);font-size:11px;color:var(--muted);margin:0 0 8px;letter-spacing:.02em}
+.parse{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px}
+.toast{position:absolute;left:18px;right:18px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--paper);padding:11px 14px;font-family:var(--mono);font-size:12px;letter-spacing:.02em;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <main id="main"></main>
+  <nav class="tabbar" aria-label="Main">
+    <button class="tab" data-act="tab" data-id="today">Today</button>
+    <button class="tab" data-act="tab" data-id="pools">Pools</button>
+    <button class="tab" data-act="tab" data-id="margins">Margins</button>
+    <button class="tab" data-act="tab" data-id="home">Homepage</button>
+  </nav>
+  <div class="scrim" id="scrim" data-act="closeSheet" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Options" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const posts = n => `${n} post${n === 1 ? '' : 's'}`;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- Example data: all sites, people and posts are invented ---------- */
+const SITES = {
+  meridian:{name:'The Meridian Wire',domain:'meridianwire.news',handle:'@meridianwire'},
+  static:{name:'Static & Snow',domain:'staticandsnow.tv',handle:'@staticandsnow'},
+  fernhill:{name:'Fernhill Outfitters',domain:'fernhill.co',handle:'@fernhill'},
+  orbit:{name:'Low Orbit',domain:'loworbit.blog',handle:'@loworbit'},
+  juniper:{name:'Juniper Ruiz',domain:'juniper.garden'},
+  moth:{name:'Moth Radio',domain:'mothradio.band',handle:'@mothradio'},
+  smallhours:{name:'Small Hours',domain:'smallhours.ink'},
+  kitchen:{name:'Kitchen Table Notes',domain:'kitchentable.recipes'},
+  garden:{name:'Pocket Garden',domain:'pocketgarden.blog'},
+  tram:{name:'Tram Diaries',domain:'tramdiaries.net'}
+};
+const PEOPLE = {
+  juniper:{name:'Juniper Ruiz',color:'#B45309'}, dani:{name:'Dani Okafor',color:'#C2410C'},
+  theo:{name:'Theo Lindqvist',color:'#1D4ED8'}, priya:{name:'Priya Kapoor',color:'#6D28D9'},
+  me:{name:'Rowan Vale',color:'#22626A'}
+};
+const POSTS = {
+  p1:{site:'meridian',title:'Council approves all-day bus lanes on the Fifth Avenue corridor',dek:'The 7–2 vote ends a two-year fight over curb space.',author:'Ana Reyes',read:6,ago:'18 min ago',art:['#9CC3E6','#1D3B6E','#F2C14E'],
+    body:['The 7–2 vote ends a two-year fight over curb space on one of the busiest streets in the city.','Buses on the 14 and 22 lines should run about six minutes faster at rush hour once the paint goes down in March. Delivery loading zones will move to the side streets between 10 a.m. and 4 p.m.','Business owners on the corridor were split. Several restaurants testified that most of their customers arrive on foot or by bus.']},
+  p2:{site:'juniper',title:"I deleted Instagram for 90 days. Here's what I read instead.",dek:'Turns out my favorite bakery has a blog, and the blog has a feed.',author:'Juniper Ruiz',read:9,ago:'1 hr ago',art:['#F6C7A8','#B45309','#FFF1C9'],
+    body:["I expected to miss the photos. What I actually missed was knowing when my favorite bakery had a new bread.","Turns out they have a blog, and the blog has an RSS feed. So does the record shop, the climbing gym, and the city's parks department. They had been posting the same things there all along.","By week three I noticed I was reading longer things, and I was reading them on the sites that made them. Every page looked different. I had forgotten that the web used to look different."]},
+  p3:{site:'static',title:'Every episode of The Lighthouse Keepers, ranked',dek:'Forty-two episodes, three seasons, one infamous fog machine.',author:'Marcus Bell',read:14,ago:'2 hr ago',art:['#3B1A4A','#7B2D8E','#F6E7FF']},
+  p4:{site:'fernhill',title:'Meet the Ridgeback 40L, our first pack made from retired sailcloth',dek:'Every pack ships with a tag naming the boat it came from.',author:'The Fernhill team',read:4,ago:'3 hr ago',art:['#CFE3D3','#2E5E3B','#F4A259']},
+  p5:{site:'orbit',title:"Issue 112: The quiet race to put a telescope on the Moon's far side",dek:'Three teams want to build there first. None of them agree on how.',author:'Sol Haddad',read:11,ago:'5 hr ago',art:['#0B1530','#5B6B8C','#EDEFF7'],
+    body:["The far side of the Moon is the most radio-quiet place in the inner solar system. The Moon itself blocks every broadcast, phone call and microwave oven on Earth.","That silence is exactly what radio astronomers want. From there, a simple antenna could hear the faint signals left over from the universe's first stars.","Three teams are now racing to build there. One wants to unroll a wire mesh across a crater floor. Another wants to scatter hundreds of small antennas from a lander. The third thinks both are too early and wants to send a single test dish first."]},
+  p6:{site:'moth',title:"'Paper Lanterns' is out now, plus fall tour dates",dek:'Recorded in a church hall in one take. Listen for the radiator at 2:41.',author:'Moth Radio',read:2,ago:'7 hr ago',art:['#F8B4C4','#9F1239','#FFE4A1']},
+  p7:{site:'smallhours',title:'Page 214: Ines reaches the coast',dek:'New page is up.',author:'Ren Takeda',read:1,ago:'9 hr ago',art:['#A7E0DA','#0F766E','#FDF6E3']},
+  p8:{site:'kitchen',title:'One-pan miso butter mushrooms, in 20 minutes',dek:"Brown them hard, don't crowd the pan, miso goes in off the heat.",author:'Hana Ito',read:5,ago:'11 hr ago',art:['#F7D79B','#A16207','#FFFFFF']},
+  p9:{site:'garden',title:'Your website is a garden, not a billboard',dek:"Some notes on tending a personal site for ten years.",author:'Ivy Marsh',read:7,ago:'3 days ago',art:['#DDEFC6','#4D7C0F','#FFF6D5']},
+  p10:{site:'tram',title:'Night buses, ranked by how much they feel like a movie',dek:'The 96 wins. It always wins.',author:'Theo Lindqvist',read:6,ago:'1 week ago',art:['#1E1B4B','#B91C1C','#FDE68A']}
+};
+const NOTES = {
+  p5:[{para:0,quote:'the most radio-quiet place in the inner solar system',by:'juniper',text:'This line made me want to go sit in a field with my phone off.'},
+      {para:2,quote:'unroll a wire mesh across a crater floor',by:'theo',text:'There is a great diagram of this on their site. Go look at it there.'}],
+  p2:[{para:1,quote:'They had been posting the same things there all along.',by:'dani',text:'This is the part people need to hear.'},
+      {para:2,quote:'I had forgotten that the web used to look different.',by:'priya',text:'Same. I miss sites having a personality.'}],
+  p1:[{para:1,quote:'about six minutes faster at rush hour',by:'theo',text:'Six minutes each way is half an hour a week for me.'}]
+};
+let PASSES = [
+  {by:'juniper',p:'p5',note:"Read this one slowly. The part about radio silence on the far side is the calmest thing I've read all month."},
+  {by:'priya',p:'p8',note:'Made it last night with oyster mushrooms. She is right about adding the miso off the heat.'}
+];
+const POOLS = {
+  slow:{title:'Slow internet',by:'juniper',desc:'Essays and how-tos about leaving the feeds and finding your way back to websites.',posts:['p2','p9','p10'],notes:{p2:'Start here. My own 90 days.',p9:'The best case for having a personal site I have ever read.',p10:'Not about the internet at all, but it has the right pace.'},followedBy:'Dani and Theo'},
+  moon:{title:'Moon stuff',by:'theo',desc:'Lunar science, launch news and the occasional moon poem.',posts:['p5'],notes:{p5:'Issue 112 is their best one yet.'},followedBy:'Juniper'},
+  cook:{title:'Cook this week',by:'priya',desc:'Recipes I actually made, from blogs I trust.',posts:['p8'],notes:{p8:'Twenty minutes, one pan. Weeknight hero.'},followedBy:'Dani'},
+  fall:{title:'Fall mixtape',by:'dani',desc:'New songs from bands with their own websites.',posts:['p6'],notes:{p6:'Radiator clank at 2:41 is the best part.'},followedBy:'Priya'},
+  transit:{title:'Good transit news',by:'me',desc:'Bus lanes, new lines, and other reasons for hope.',posts:['p1','p10'],notes:{p1:'Finally.',p10:'The 96 really is cinematic.'},followedBy:'Theo'},
+  reading:{title:'Read later, actually',by:'me',desc:'Long reads saved for the weekend.',posts:['p3'],notes:{p3:'Saving for Sunday.'},followedBy:''}
+};
+const LOG = [
+  {t:'8m',html:'<b>Theo</b> replied to your margin note on “Council approves all-day bus lanes”: “Same route. See you on the 22.”'},
+  {t:'1h',html:'<b>Juniper</b> added a post you passed along to her pool <b>Slow internet</b>.'},
+  {t:'3h',html:'<b>Priya</b> started following your pool <b>Good transit news</b>.'},
+  {t:'1d',html:'<b>Dani</b> passed along a post you noted, and quoted your note.'},
+  {t:'2d',html:'<b>Low Orbit</b> linked to a pool that includes their issue. Pools are public unless you make them private.'}
+];
+
+/* ---------- Homepage customization ---------- */
+const PAPERS = {seaglass:{label:'Sea glass',paper:'#E9EFEB',ink:'#12233B'},newsprint:{label:'Newsprint',paper:'#F1EFE7',ink:'#1B1B1B'},kraft:{label:'Kraft',paper:'#D7C19C',ink:'#2B1D0E'},blueprint:{label:'Blueprint',paper:'#1F4D8C',ink:'#EAF2FF'},night:{label:'Night',paper:'#17171F',ink:'#EDE6D6'}};
+const TYPES = {serif:{label:'Serif',display:'"Young Serif", Georgia, serif',body:'Newsreader, Georgia, serif'},mono:{label:'Mono',display:'"IBM Plex Mono", monospace',body:'"IBM Plex Mono", monospace'},hand:{label:'Handwritten',display:'Caveat, cursive',body:'Newsreader, Georgia, serif'}};
+const HLS = ['#F27A63','#FFD84D','#7FE0B5','#B9A2FF'];
+const LAYOUTS = {zine:'Zine',scrapbook:'Scrapbook',index:'Index'};
+const CSS_KEYS = {paper:'--hp-paper',ink:'--hp-ink',highlight:'--hp-hl',tilt:'--hp-tilt',radius:'--hp-radius'};
+const HOME_DEFAULT = {layout:'scrapbook',paper:'kraft',type:'serif',hl:'#F27A63',css:'--tilt: 1.5deg;\n--radius: 2px;'};
+let home = {...HOME_DEFAULT};
+try { Object.assign(home, JSON.parse(localStorage.getItem('tidepool-home') || '{}')); } catch (e) {}
+const saveHome = () => { try { localStorage.setItem('tidepool-home', JSON.stringify(home)); } catch (e) {} };
+function parseCSS(src){
+  const out = {}, bad = [];
+  src.split(/[;\n]/).map(l => l.trim()).filter(Boolean).forEach(l => {
+    const m = l.match(/^--([a-z-]+)\s*:\s*(.+)$/i);
+    if (m && CSS_KEYS[m[1]] && /^[#a-z0-9(),.%\s-]{1,40}$/i.test(m[2].trim())) out[CSS_KEYS[m[1]]] = m[2].trim(); else bad.push(l);
+  });
+  return {out, bad};
+}
+
+/* ---------- State ---------- */
+const S = {tab:'today', view:{name:'today'}, from:[], myNotes:{}, inPools:{}, followPools:new Set(['slow','moon','cook']), sheet:null, nPara:null, vis:'friends', found:null};
+Object.entries(POOLS).forEach(([k,p]) => p.posts.forEach(id => (S.inPools[id] ||= new Set()).add(k)));
+
+/* ---------- Pieces ---------- */
+function art(p, cls='art'){ const [s,h,u] = p.art;
+  return `<span class="${cls}" style="background:radial-gradient(circle, rgba(18,35,59,.32) 1px, transparent 1.4px) 0 0/5px 5px,radial-gradient(circle at 72% 30%, ${u} 0 13%, transparent 13.5%),radial-gradient(130% 70% at 15% 108%, ${h} 0 50%, transparent 50.5%),radial-gradient(110% 60% at 92% 112%, color-mix(in srgb, ${h} 70%, #000) 0 50%, transparent 50.5%),linear-gradient(175deg, ${s}, color-mix(in srgb, ${s} 55%, #fff))"></span>`; }
+const ini = k => `<span class="ini" style="background:${PEOPLE[k].color}">${PEOPLE[k].name[0]}</span>`;
+const pname = k => k === 'me' ? 'You' : PEOPLE[k].name.split(' ')[0];
+const kicker = id => { const s = SITES[POSTS[id].site]; return `<p class="kicker">${esc(s.name)} <i>· ${POSTS[id].ago}</i></p>`; };
+const noteCount = id => (NOTES[id] || []).length + (S.myNotes[id] || []).length;
+const acts = id => `<div class="acts">
+  <button class="textbtn" data-act="open" data-id="${id}">Note${noteCount(id) ? ` (${noteCount(id)})` : ''}</button>
+  <button class="textbtn" data-act="pass" data-id="${id}">Pass along</button>
+  <button class="textbtn ${S.inPools[id]?.size ? 'on' : ''}" data-act="pool" data-id="${id}">${[...(S.inPools[id] || [])].some(k => POOLS[k].by === 'me') ? 'In your pool' : 'Add to pool'}</button>
+  <button class="textbtn" data-act="visit" data-id="${id}">Read on site ↗</button></div>`;
+
+function viewToday(){
+  const lead = 'p1', rest = ['p2','p3','p4','p6','p7'];
+  return `<header class="mast">
+    <div class="mast-row"><span class="mono">Sun, Nov 1 · Morning edition</span><button class="textbtn" data-act="addSite">+ Add a site</button></div>
+    <h1 class="wordmark">Tidepool<span>.</span></h1>
+    <p class="mono dek">11 new from your 9 sites · ${PASSES.length + 2} notes from people you read with</p>
+  </header>
+  <article class="lead">${kicker(lead)}<h2><button data-act="open" data-id="${lead}">${esc(POSTS[lead].title)}</button></h2><p class="dek">${esc(POSTS[lead].dek)}</p>${art(POSTS[lead])}<p class="cap">Summary from meridianwire.news's feed · ${POSTS[lead].read} min read on their site</p>${acts(lead)}</article>
+  <h2 class="rubric">Passed along <small>by people you read with</small></h2>
+  ${PASSES.map(x => `<div class="pass"><div class="byl">${ini(x.by)}<span class="mono">${esc(pname(x.by))} passed this along</span></div>
+    <p class="pnote">${esc(x.note)}</p>
+    <div class="pick"><div>${kicker(x.p)}<h3><button data-act="open" data-id="${x.p}">${esc(POSTS[x.p].title)}</button></h3></div>${art(POSTS[x.p])}</div>
+    ${acts(x.p)}</div>`).join('')}
+  <h2 class="rubric">From your sites <small>newest first</small></h2>
+  ${rest.map(id => `<article class="c-row"><div>${kicker(id)}<h3><button data-act="open" data-id="${id}">${esc(POSTS[id].title)}</button></h3><p>${esc(POSTS[id].dek)}</p>
+    <div class="meta"><span class="mono">${POSTS[id].read} min</span>${noteCount(id) ? `<span class="mono notes-flag">${noteCount(id)} margin notes</span>` : ''}</div></div>${art(POSTS[id])}</article>`).join('')}
+  <h2 class="rubric">In the pools</h2>
+  <button class="pupdate" data-act="openPool" data-id="slow"><span class="minis">${['p2','p9','p10'].map(id => art(POSTS[id], '')).join('')}</span><span class="px"><b>Juniper</b> added 3 posts to <i>Slow internet</i></span></button>
+  <div class="edition-end"><div class="fleuron">❦</div><p>That's the morning edition. The evening edition arrives at 6 pm with whatever your sites publish today.</p><button class="cta alt" data-act="tab" data-id="pools">Browse the pools</button></div>`;
+}
+
+function paraHTML(id, i, text){
+  let h = esc(text);
+  (NOTES[id] || []).filter(n => n.para === i).forEach(n => { h = h.replace(esc(n.quote), `<mark>${esc(n.quote)}</mark>`); });
+  const notes = [...(NOTES[id] || []), ...(S.myNotes[id] || [])].filter(n => n.para === i);
+  return `<p data-act="annotate" data-id="${i}" class="${notes.length ? 'noted' : ''}" tabindex="0">${h}</p>${notes.length ? `<div class="margin">${notes.map(n => `<div class="mnote">${ini(n.by)}<div><b>${esc(pname(n.by))}${n.vis === 'me' ? ' · only you' : ''}</b>${esc(n.text)}</div></div>`).join('')}</div>` : ''}`;
+}
+function viewPost(id){
+  const p = POSTS[id], s = SITES[p.site], body = p.body || [p.dek], pools = [...(S.inPools[id] || [])];
+  return `<div class="backrow"><button class="textbtn" data-act="back">← Back</button><button class="textbtn" data-act="visit" data-id="${id}">${s.domain} ↗</button></div>
+  <article class="reader">
+    <p class="kicker" style="margin-top:16px">${esc(s.name)}</p>
+    <h1>${esc(p.title)}</h1>
+    <p class="byline">BY ${esc(p.author).toUpperCase()} · ${p.read} MIN · ${p.ago.toUpperCase()}</p>
+    ${art(p)}
+    <p class="tip">Tap any paragraph to leave a margin note. Your notes show up for people you read with.</p>
+    <div class="body">${body.map((t,i) => paraHTML(id, i, t)).join('')}</div>
+    <p class="feednote">This is everything ${s.domain} includes in its feed. Tidepool doesn't scrape or copy the rest of the page.</p>
+    <button class="cta" data-act="visit" data-id="${id}">Continue on ${s.domain} ↗</button>
+    ${acts(id)}
+    ${pools.length ? `<h2 class="rubric">In pools</h2><div class="inpools">${pools.map(k => `<button class="pchip" data-act="openPool" data-id="${k}">${esc(POOLS[k].title)} · ${esc(pname(POOLS[k].by))}</button>`).join('')}</div>` : ''}
+  </article>`;
+}
+
+const poolCard = k => { const pl = POOLS[k], ids = pl.posts.slice(0,4);
+  return `<button class="pool" data-act="openPool" data-id="${k}"><span class="collage">${[0,1,2,3].map(i => ids[i] ? art(POSTS[ids[i]], '') : '<span></span>').join('')}</span><span class="pt">${esc(pl.title)}</span><span class="mono">${pl.by === 'me' ? 'Your pool' : 'By ' + esc(pname(pl.by))} · ${posts(pl.posts.length)}</span></button>`; };
+function viewPools(){
+  const mine = Object.keys(POOLS).filter(k => POOLS[k].by === 'me'), followed = [...S.followPools], other = Object.keys(POOLS).filter(k => POOLS[k].by !== 'me' && !S.followPools.has(k));
+  return `<header class="page-h"><h1>Pools</h1><p>Hand-picked posts from across the web, gathered by people. Follow a pool and its new picks arrive in your edition.</p></header>
+  <h2 class="rubric">Your pools</h2><div class="pool-grid">${mine.map(poolCard).join('')}</div>
+  <h2 class="rubric">Pools you follow</h2><div class="pool-grid">${followed.map(poolCard).join('')}</div>
+  ${other.length ? `<h2 class="rubric">Worth a look</h2><div class="pool-grid">${other.map(poolCard).join('')}</div>` : ''}`;
+}
+function viewPool(k){
+  const pl = POOLS[k], on = S.followPools.has(k);
+  return `<div class="backrow"><button class="textbtn" data-act="back">← Back</button><span class="mono" style="color:var(--muted)">${posts(pl.posts.length)}</span></div>
+  <header class="page-h"><p class="kicker" style="margin-top:16px">A pool by ${esc(pl.by === 'me' ? 'you' : PEOPLE[pl.by].name)}</p><h1>${esc(pl.title)}</h1><p>${esc(pl.desc)}</p>
+  ${pl.followedBy ? `<p class="mono" style="margin-top:8px">Followed by ${esc(pl.followedBy)}</p>` : ''}</header>
+  ${pl.by === 'me' ? '' : `<button class="cta ${on ? 'alt' : ''}" style="margin-top:14px" data-act="followPool" data-id="${k}">${on ? 'Following this pool' : 'Follow this pool'}</button>`}
+  ${pl.posts.map(id => `<div class="pool-item">${kicker(id)}<h3><button data-act="open" data-id="${id}" style="text-align:left">${esc(POSTS[id].title)}</button></h3>${pl.notes[id] ? `<p class="cnote">${esc(pl.notes[id])}</p>` : ''}</div>`).join('')}`;
+}
+const viewMargins = () => `<header class="page-h"><h1>Margins</h1><p>Replies to your notes, and where the things you passed along went next.</p></header>
+  <div style="margin-top:12px">${LOG.map(l => `<div class="log"><span class="mono">${l.t}</span><p>${l.html}</p></div>`).join('')}</div>
+  <div class="ledger"><h3 class="mono">This week</h3><dl><dt>Posts read</dt><dd>14</dd><dt>Visits you sent to sites</dt><dd>9</dd><dt>Margin notes written</dt><dd>${3 + Object.values(S.myNotes).flat().length}</dd><dt>Things passed along</dt><dd>${PASSES.filter(x => x.by === 'me').length + 2}</dd></dl>
+  <p>Tidepool has no likes or follower counts. These numbers are only visible to you.</p></div>`;
+
+function viewHome(){
+  const pp = PAPERS[home.paper], tp = TYPES[home.type], css = parseCSS(home.css).out;
+  const vars = {'--hp-paper':pp.paper,'--hp-ink':pp.ink,'--hp-hl':home.hl,'--hp-display':tp.display,'--hp-body':tp.body,'--hp-tilt':'1.5deg','--hp-radius':'2px',...css};
+  const style = Object.entries(vars).map(([k,v]) => `${k}:${v}`).join(';');
+  const notes = [{p:'p1',q:'about six minutes faster at rush hour',t:'Half an hour a week back.'},...Object.entries(S.myNotes).flatMap(([id,arr]) => arr.map(n => ({p:id,q:null,t:n.text})))].slice(-3).reverse();
+  return `<div class="hp" data-layout="${home.layout}" style='${style}'>
+    <div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl" style="margin:0">tidepool.example/rowan</span><button class="editbtn" data-act="edit">Edit homepage</button></div>
+    <h1>Rowan Vale</h1>
+    <p class="tag">Reads about buses, the Moon and mushrooms. Writes at rowan.blog.</p>
+    <section class="blk"><p class="lbl">Currently reading</p><p class="reading"><mark>Issue 112</mark> of Low Orbit, slowly, on the bus.</p></section>
+    <section class="blk"><p class="lbl">My pools</p><div class="hpools">${Object.keys(POOLS).filter(k => POOLS[k].by === 'me').map(k => `<button class="hpool" data-act="openPool" data-id="${k}">${esc(POOLS[k].title)}<small>${posts(POOLS[k].posts.length)}</small></button>`).join('')}</div></section>
+    <section class="blk"><p class="lbl">Blogroll · sites I read</p><ul class="roll">${['orbit','juniper','tram','kitchen','smallhours','moth'].map(k => `<li>${esc(SITES[k].name)}<span>${SITES[k].domain}</span></li>`).join('')}</ul></section>
+    <section class="blk"><p class="lbl">Recent margin notes</p>${notes.map(n => `<p class="hnote">${esc(n.t)}<i>on ${esc(POSTS[n.p].title)}</i></p>`).join('')}</section>
+  </div>`;
+}
+function editHTML(){
+  const pr = parseCSS(home.css);
+  return `<h2>Edit your homepage</h2><p class="sub">Your homepage is yours to decorate. Everyone else's reading view stays plain.</p>
+  <div class="opt"><span class="mono">Layout</span><div class="chips">${Object.entries(LAYOUTS).map(([k,l]) => `<button class="chip" data-act="hLayout" data-id="${k}" aria-pressed="${home.layout === k}">${l}</button>`).join('')}</div></div>
+  <div class="opt"><span class="mono">Paper</span><div class="chips">${Object.entries(PAPERS).map(([k,p]) => `<button class="sw" data-act="hPaper" data-id="${k}" aria-pressed="${home.paper === k}" style="background:${p.paper};color:${p.ink}" aria-label="${p.label}">Aa</button>`).join('')}</div></div>
+  <div class="opt"><span class="mono">Type</span><div class="chips">${Object.entries(TYPES).map(([k,t]) => `<button class="chip" data-act="hType" data-id="${k}" aria-pressed="${home.type === k}" style="font-family:${t.display.replace(/"/g,"'")};text-transform:none;font-size:15px">${t.label}</button>`).join('')}</div></div>
+  <div class="opt"><span class="mono">Highlighter</span><div class="chips">${HLS.map(c => `<button class="hlsw" data-act="hHl" data-id="${c}" aria-pressed="${home.hl === c}" style="background:${c}" aria-label="Highlighter ${c}"></button>`).join('')}</div></div>
+  <div class="opt"><label class="mono" for="hcss" style="display:block;margin-bottom:8px;color:var(--muted)">Advanced: homepage CSS</label>
+    <textarea class="field" id="hcss" spellcheck="false" style="font-family:var(--mono);font-size:13px">${esc(home.css)}</textarea>
+    <p class="parse" id="parse">Allowed: --paper, --ink, --highlight, --tilt, --radius. ${Object.keys(pr.out).length} applied${pr.bad.length ? `, ${pr.bad.length} ignored` : ''}. No scripts, no outside images.</p></div>
+  <div class="row"><button class="cta alt" style="width:auto;padding-inline:16px" data-act="hReset">Reset</button><button class="cta" data-act="closeSheet">Done</button></div>`;
+}
+
+/* ---------- Render ---------- */
+function render(keep){
+  const main = $('#main'), y = main.scrollTop, v = S.view;
+  main.innerHTML = ({today:viewToday, pools:viewPools, margins:viewMargins, home:viewHome, post:() => viewPost(v.id), pool:() => viewPool(v.id)})[v.name]();
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-current', t.dataset.id === S.tab ? 'page' : 'false'));
+  main.scrollTop = keep ? y : 0;
+}
+let toastT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+function openSheet(kind, html){ S.sheet = kind; $('#sheet').innerHTML = html; $('#sheet').hidden = false; $('#scrim').hidden = false; }
+function closeSheet(){ $('#sheet').hidden = true; $('#scrim').hidden = true; S.sheet = null; }
+function go(view){ S.from.push({view:S.view, y:$('#main').scrollTop}); S.view = view; render(); }
+
+function poolSheet(id){
+  const mine = Object.keys(POOLS).filter(k => POOLS[k].by === 'me');
+  return `<h2>Add to a pool</h2><p class="quoted">${esc(POSTS[id].title)}</p>
+  ${mine.map(k => `<label class="poolcheck" for="pc-${k}">${esc(POOLS[k].title)}<input type="checkbox" id="pc-${k}" data-pool="${k}" ${S.inPools[id]?.has(k) ? 'checked' : ''}></label>`).join('')}
+  <form class="row" id="newpool"><input class="field" id="np" placeholder="New pool name" maxlength="40" aria-label="New pool name"><button class="cta" style="width:auto;padding-inline:16px">Create</button></form>
+  <div class="row"><button class="cta alt" data-act="closeSheet">Done</button></div>`;
+}
+function lookup(raw){
+  const q = raw.trim().toLowerCase(); if (!q) return null;
+  const handle = q.startsWith('@') ? q : null;
+  let k = Object.keys(SITES).find(k => (handle && SITES[k].handle === handle) || SITES[k].domain === q.replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/\/.*$/,''));
+  if (k) return {name:SITES[k].name, domain:SITES[k].domain, handle};
+  const dom = (handle ? handle.slice(1).replace(/[^a-z0-9-]/g,'') : q.replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/\/.*$/,'')) + (q.includes('.') ? '' : '.com');
+  return {name:dom.split('.')[0].replace(/\b\w/g, c => c.toUpperCase()), domain:dom, handle};
+}
+const addHTML = () => `<h2>Add a site</h2><p class="sub">Paste a web address, or an @handle from Instagram or X. Tidepool finds the site behind it and its feed.</p>
+  <form class="row" id="lookup"><input class="field" id="q" placeholder="loworbit.blog or @loworbit" autocomplete="off" aria-label="Website or handle"><button class="cta" style="width:auto;padding-inline:16px">Find</button></form>
+  ${S.found ? `<div class="found"><p class="trail">${S.found.handle ? esc(S.found.handle) + ' → ' : ''}${esc(S.found.domain)} → feed found</p><h3>${esc(S.found.name)}</h3><p>New posts will appear in your next edition, grouped under “From your sites”.</p><button class="cta" data-act="followSite">Add to my edition</button></div>` : ''}`;
+
+const H = {
+  tab(id){ S.tab = id; S.view = {name:id}; S.from = []; render(); },
+  open(id){ go({name:'post', id}); },
+  openPool(id){ go({name:'pool', id}); },
+  back(){ const f = S.from.pop(); S.view = f ? f.view : {name:S.tab}; render(); if (f) $('#main').scrollTop = f.y; },
+  visit(id){ toast(`Opens ${SITES[POSTS[id].site].domain} in an in-app browser.`); },
+  annotate(i){ const id = S.view.id, text = (POSTS[id].body || [POSTS[id].dek])[+i]; S.nPara = +i;
+    openSheet('note', `<h2>Margin note</h2><p class="quoted">“${esc(text.length > 150 ? text.slice(0,150) + '…' : text)}”</p>
+      <form id="nform"><textarea class="field" id="ntext" placeholder="What do you think about this part?" maxlength="400" aria-label="Margin note"></textarea>
+      <div class="opt"><span class="mono">Who can see it</span><div class="chips">${[['friends','People I read with'],['all','Everyone'],['me','Only me']].map(([k,l]) => `<button type="button" class="chip" data-act="vis" data-id="${k}" aria-pressed="${S.vis === k}">${l}</button>`).join('')}</div></div>
+      <button class="cta">Save note</button></form>`); setTimeout(() => $('#ntext')?.focus(), 60); },
+  vis(k){ S.vis = k; document.querySelectorAll('[data-act="vis"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === k)); },
+  pass(id){ S.pid = id; openSheet('pass', `<h2>Pass it along</h2><p class="quoted">${esc(POSTS[id].title)}</p>
+    <form id="pform"><textarea class="field" id="ptext" placeholder="Say why it's worth someone's time" maxlength="280" aria-label="Why you're passing this along"></textarea>
+    <p class="counter" id="pcount">Write at least 12 characters</p>
+    <p class="sub" style="font-size:14px">Tidepool asks for a sentence whenever you pass something along. It keeps the edition personal and slows down outrage sharing.</p>
+    <button class="cta" id="pbtn" disabled>Pass along</button></form>`); setTimeout(() => $('#ptext')?.focus(), 60); },
+  pool(id){ S.pid = id; openSheet('pool', poolSheet(id)); },
+  followPool(k){ S.followPools.has(k) ? S.followPools.delete(k) : S.followPools.add(k); render(true); toast(S.followPools.has(k) ? `Following ${POOLS[k].title}. New picks arrive in your edition.` : `Unfollowed ${POOLS[k].title}`); },
+  addSite(){ S.found = null; openSheet('add', addHTML()); },
+  followSite(){ toast(`Added ${S.found.name} to your edition`); closeSheet(); },
+  edit(){ openSheet('edit', editHTML()); },
+  hLayout(k){ home.layout = k; saveHome(); render(true); refresh(); },
+  hPaper(k){ home.paper = k; saveHome(); render(true); refresh(); },
+  hType(k){ home.type = k; saveHome(); render(true); refresh(); },
+  hHl(k){ home.hl = k; saveHome(); render(true); refresh(); },
+  hReset(){ home = {...HOME_DEFAULT}; saveHome(); render(true); refresh(); },
+  closeSheet
+};
+function refresh(){ if (S.sheet === 'edit') { const sh = $('#sheet'), y = sh.scrollTop; sh.innerHTML = editHTML(); sh.scrollTop = y; } }
+
+document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const h = H[el.dataset.act]; if (h) { e.preventDefault(); h(el.dataset.id, el); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet();
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('p[data-act="annotate"]')) { e.preventDefault(); H.annotate(e.target.dataset.id); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'ptext') { const n = e.target.value.trim().length; $('#pbtn').disabled = n < 12; $('#pcount').textContent = n < 12 ? `${12 - n} more characters` : `${n} / 280`; }
+  if (e.target.id === 'hcss') { home.css = e.target.value; saveHome(); render(true); const pr = parseCSS(home.css); $('#parse').textContent = `Allowed: --paper, --ink, --highlight, --tilt, --radius. ${Object.keys(pr.out).length} applied${pr.bad.length ? `, ${pr.bad.length} ignored` : ''}. No scripts, no outside images.`; }
+});
+document.addEventListener('change', e => {
+  const k = e.target.dataset.pool; if (!k) return; const id = S.pid, set = (S.inPools[id] ||= new Set());
+  if (e.target.checked) { set.add(k); if (!POOLS[k].posts.includes(id)) POOLS[k].posts.push(id); toast(`Added to ${POOLS[k].title}`); }
+  else { set.delete(k); POOLS[k].posts = POOLS[k].posts.filter(x => x !== id); toast(`Removed from ${POOLS[k].title}`); }
+  render(true);
+});
+document.addEventListener('submit', e => {
+  e.preventDefault(); const f = e.target;
+  if (f.id === 'nform') { const t = $('#ntext').value.trim(); if (!t) return; const id = S.view.id; (S.myNotes[id] ||= []).push({para:S.nPara, by:'me', text:t, vis:S.vis}); closeSheet(); render(true); toast(S.vis === 'me' ? 'Note saved. Only you can see it.' : 'Note saved in the margin'); }
+  if (f.id === 'pform') { const t = $('#ptext').value.trim(); if (t.length < 12) return; PASSES.unshift({by:'me', p:S.pid, note:t}); closeSheet(); render(true); toast('Passed along to the 31 people who read with you'); }
+  if (f.id === 'newpool') { const t = $('#np').value.trim(); if (!t) return; const k = 'u' + Date.now(); POOLS[k] = {title:t, by:'me', desc:'A new pool.', posts:[S.pid], notes:{}, followedBy:''}; (S.inPools[S.pid] ||= new Set()).add(k); $('#sheet').innerHTML = poolSheet(S.pid); render(true); toast(`Created ${t} and added this post`); }
+  if (f.id === 'lookup') { S.found = lookup($('#q').value); $('#sheet').innerHTML = addHTML(); }
+});
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Porchlight Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=Courier+Prime:wght@400;700&family=Gaegu:wght@400;700&display=swap">
+<style>
+/* Layout: a porch at night. Pixel display type, chunky panels with hard drop shadows, a starfield behind everything. Deliberately dark only. */
+:root{
+  --night:#0F1233; --panel:#1A1F4E; --panel2:#252B66; --ink:#F5EFDC; --muted:#B3B2D6;
+  --glow:#FFC857; --glow-ink:#2A1A00; --pink:#FF7EB6; --pink-ink:#3A0F2A; --mint:#6EE7C8;
+  --line:rgba(245,239,220,.16); --shadow:rgba(3,4,18,.6); --scrim:rgba(5,6,22,.62);
+  --pixel:"Pixelify Sans", "Courier New", monospace; --body:"Atkinson Hyperlegible", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--night);color:var(--ink);font:15.5px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+:focus-visible{outline:2px dashed var(--glow);outline-offset:2px}
+[hidden]{display:none!important}
+.px{width:18px;height:18px;flex:none}
+
+.app{position:relative;height:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;
+  background:radial-gradient(1px 1px at 14px 20px, rgba(245,239,220,.55) 50%, transparent 52%) 0 0/64px 64px,radial-gradient(1px 1px at 44px 50px, rgba(255,200,87,.45) 50%, transparent 52%) 0 0/64px 64px,radial-gradient(1.5px 1.5px at 30px 8px, rgba(110,231,200,.35) 50%, transparent 52%) 0 0/96px 96px,var(--night)}
+@media (min-width:441px){.app{border-inline:2px solid var(--line)}}
+.top{flex:none;display:flex;align-items:center;gap:10px;min-height:56px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px 14px;border-bottom:2px solid var(--line);background:rgba(15,18,51,.9)}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--pixel);font-size:25px;font-weight:600;flex:1}
+.logo .px{width:24px;height:24px;color:var(--glow);filter:drop-shadow(0 0 6px rgba(255,200,87,.85))}
+.top h1{font-family:var(--pixel);font-size:20px;font-weight:600;margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.back{font-family:var(--pixel);font-size:15px;color:var(--glow);padding:4px 6px}
+main{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:12px 12px 28px;display:flex;flex-direction:column;gap:14px}
+main>*{flex-shrink:0}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--line);background:rgba(15,18,51,.94);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0 10px;font-family:var(--pixel);font-size:12.5px;color:var(--muted)}
+.tab .px{width:20px;height:20px}
+.tab[aria-current="page"]{color:var(--glow)}
+.tab[aria-current="page"] .px{filter:drop-shadow(0 0 5px rgba(255,200,87,.85))}
+
+.pbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--pixel);font-size:14px;font-weight:500;padding:7px 12px;background:var(--glow);color:var(--glow-ink);border:2px solid var(--glow-ink);box-shadow:3px 3px 0 var(--shadow)}
+.pbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+.pbtn.alt{background:var(--panel2);color:var(--ink);border-color:var(--line)}
+.pbtn.pink{background:var(--pink);color:var(--pink-ink);border-color:var(--pink-ink)}
+.pbtn.block{width:100%}
+.pbtn[disabled]{opacity:.45}
+.sbtn{font-family:var(--pixel);font-size:13px;padding:6px 10px;border:2px solid var(--line);background:var(--panel2);display:inline-flex;gap:6px;align-items:center}
+.sbtn:hover{border-color:var(--glow);color:var(--glow)}
+.sbtn.on{border-color:var(--mint);color:var(--mint)}
+
+.status{font-family:var(--pixel);font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;margin:0}
+.status b{color:var(--glow);font-weight:600}
+.strip{display:flex;gap:8px;overflow-x:auto;margin:0 -12px;padding:2px 12px 6px}
+.pchip{flex:none;display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--panel);border:2px solid var(--line);box-shadow:3px 3px 0 var(--shadow);font-family:var(--pixel);font-size:13.5px}
+.pchip i{width:10px;height:10px}
+.n{background:var(--pink);color:var(--pink-ink);padding:0 6px;font-family:var(--pixel);font-size:12px;font-style:normal}
+
+.card{background:var(--panel);border:2px solid var(--line);box-shadow:4px 4px 0 var(--shadow);padding:12px}
+.ctx{font-family:var(--pixel);font-size:13.5px;color:var(--pink);margin:0 0 8px;display:flex;gap:8px;align-items:center}
+.handnote{margin:0 0 12px;padding:8px 10px;background:var(--panel2);border-left:4px solid var(--pink);font-size:15px}
+.site{display:flex;align-items:center;gap:10px}
+.sq,.av{display:grid;place-items:center;font-family:var(--pixel);font-weight:600;color:#fff;flex:none;box-shadow:2px 2px 0 var(--shadow)}
+.sq{width:34px;height:34px;font-size:17px}
+.av{width:28px;height:28px;font-size:14px}
+.site .who{min-width:0;flex:1}
+.site b{display:block;font-size:14.5px}
+.site small{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.title{display:block;font-size:18px;font-weight:700;line-height:1.25;margin:10px 0 6px;text-wrap:balance}
+.excerpt{margin:0 0 10px;color:var(--muted);font-size:14.5px}
+.art{display:block;width:100%;max-width:100%;aspect-ratio:16/9;border:2px solid var(--shadow)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.acts .go{margin-left:auto;color:var(--glow)}
+.talkprev{display:flex;flex-direction:column;gap:6px;margin:10px 0 0;padding:10px;background:var(--night);border:2px solid var(--line)}
+.tp{font-size:14px;margin:0}
+.tp b{color:var(--mint);font-family:var(--pixel);font-weight:500;margin-right:6px}
+.end{text-align:center;padding:14px 8px 4px}
+.end .px{width:44px;height:44px;color:var(--glow);filter:drop-shadow(0 0 12px rgba(255,200,87,.9));margin:0 auto 8px;display:block}
+.end h3{font-family:var(--pixel);font-weight:600;font-size:21px;margin:0 0 4px}
+.end p{margin:0 0 14px;color:var(--muted)}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.end .btns{justify-content:center}
+
+.h2{font-family:var(--pixel);font-size:19px;font-weight:600;margin:4px 0 0}
+.intro{font-size:14.5px;color:var(--muted);margin:0}
+.tabs2{display:flex;gap:6px;flex-wrap:wrap}
+.t2{font-family:var(--pixel);font-size:13.5px;padding:6px 10px;border:2px solid var(--line);background:var(--panel)}
+.t2[aria-pressed="true"]{background:var(--glow);color:var(--glow-ink);border-color:var(--glow-ink)}
+.msgs{display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;gap:8px;align-items:flex-end;max-width:88%}
+.msg.mine{align-self:flex-end;flex-direction:row-reverse}
+.bub{background:var(--panel2);border:2px solid var(--line);padding:7px 10px;font-size:14.5px;min-width:0}
+.bub b{display:block;font-size:12px;font-family:var(--pixel);color:var(--mint);font-weight:500}
+.mine .bub{background:var(--glow);color:var(--glow-ink);border-color:var(--glow-ink)}
+.mine .bub b{color:#6A4500}
+.shared{display:flex;gap:10px;align-items:center;text-align:left;margin-top:4px;background:var(--night);border:2px solid var(--line);padding:6px;color:var(--ink)}
+.shared .art{width:52px;aspect-ratio:1;flex:none}
+.shared span{font-size:13.5px;font-weight:700;line-height:1.25}
+.empty{color:var(--muted);font-size:14px;border:2px dashed var(--line);padding:14px;text-align:center;margin:0}
+.composer{display:flex;flex-direction:column;gap:8px;padding:10px;background:var(--panel);border:2px solid var(--line)}
+.composer textarea{width:100%;background:var(--night);border:2px solid var(--line);padding:9px;resize:none;height:66px;outline:none}
+.composer textarea:focus{border-color:var(--glow)}
+.wm{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted)}
+.wm input{accent-color:var(--glow);width:18px;height:18px;margin:1px 0 0;flex:none}
+.composer .row{display:flex;justify-content:flex-end}
+
+.porch{display:flex;gap:12px;align-items:center;width:100%;text-align:left}
+.stack{display:flex;padding-left:6px;flex:none}
+.stack .av{margin-left:-6px;width:26px;height:26px;font-size:12px;border:2px solid var(--panel)}
+.porch .info{flex:1;min-width:0}
+.porch .info b{font-family:var(--pixel);font-size:16.5px;font-weight:600;display:block}
+.porch .info small{color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.b88{width:88px;height:31px;display:inline-grid;place-items:center;font-family:var(--pixel);font-size:10px;font-weight:600;line-height:1.05;text-align:center;letter-spacing:.04em;text-transform:uppercase;border:2px outset rgba(255,255,255,.55);flex:none}
+.ring{display:flex;flex-direction:column;gap:10px}
+.ring-top{display:flex;gap:12px;align-items:center}
+.ring h3{font-family:var(--pixel);font-weight:600;font-size:17.5px;margin:0;line-height:1.2}
+.ring small{color:var(--muted)}
+.ring p{margin:0;font-size:14.5px}
+.browser{border:2px solid var(--line);box-shadow:4px 4px 0 var(--shadow)}
+.bar{display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--panel2);font-size:12px;color:var(--muted)}
+.bar i{width:9px;height:9px;background:var(--line)}
+.bar span{flex:1;min-width:0;margin-left:4px;background:var(--night);padding:2px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sitepage{padding:22px 16px 20px;min-height:220px}
+.sitepage h2{font-size:30px;line-height:1.05;margin:0 0 8px}
+.sitepage p{margin:0 0 14px}
+.sitepage .latest{padding-top:10px;border-top:1px solid currentColor;opacity:.9;font-size:14px}
+.ringnav{display:flex;align-items:stretch;border:2px solid var(--glow);font-family:var(--pixel);box-shadow:4px 4px 0 var(--shadow);background:var(--panel)}
+.ringnav button{padding:10px 12px;color:var(--glow);font-size:15px}
+.ringnav .mid{flex:1;text-align:center;border-inline:2px solid var(--glow);padding:8px 6px;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink)}
+.ringnav .mid small{color:var(--muted);font-size:11.5px}
+
+/* Profile: --m-* tokens are the owner's own choices and only style their page */
+.prof{margin:-12px -12px -28px;padding:14px 12px 30px;min-height:calc(100% + 40px);background:var(--m-tile);font-family:var(--m-font);display:flex;flex-direction:column;gap:12px}
+.mbox{background:var(--m-panel);color:var(--m-ink);border:2px solid var(--m-head);box-shadow:4px 4px 0 rgba(0,0,0,.35)}
+.mbox>h3{margin:0;background:var(--m-head);color:var(--m-panel);font-family:var(--pixel);font-size:14px;font-weight:600;padding:4px 10px}
+.mbox .in{padding:12px}
+.mbox p{margin:0}
+.mhead{display:flex;gap:12px;align-items:flex-start}
+.mav{width:92px;height:92px;flex:none;background:var(--m-head);display:grid;place-items:center;border:2px solid var(--m-ink)}
+.mav .px{width:66px;height:66px;color:var(--m-panel)}
+.mname{font-family:var(--pixel);font-size:31px;font-weight:700;line-height:1;margin:2px 0 6px}
+.n-glow{color:var(--m-head);text-shadow:0 0 6px var(--m-head),0 0 18px var(--m-head)}
+.n-rainbow{background:linear-gradient(90deg,#FF5E5E,#FFB443,#E8D24A,#3FC977,#4AA8F0,#A85EFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.n-glitter{background:linear-gradient(100deg,var(--m-head) 0 38%,#fff 48%,var(--m-head) 58% 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:glint 2.6s linear infinite}
+@keyframes glint{from{background-position:150% 0}to{background-position:-110% 0}}
+.mline{font-size:14px;margin:0 0 3px!important}
+.online{display:inline-flex;align-items:center;gap:6px;font-family:var(--pixel);font-size:12.5px;margin-top:4px}
+.online i{width:8px;height:8px;background:#2FD36C;box-shadow:0 0 6px #2FD36C}
+.counter{display:inline-flex;gap:2px;vertical-align:middle;margin-left:4px}
+.counter span{background:#000;color:#2FD36C;font-family:var(--pixel);font-size:14px;padding:0 4px}
+.song{display:flex;align-items:center;gap:10px}
+.playbtn{width:40px;height:40px;background:var(--m-head);color:var(--m-panel);display:grid;place-items:center;flex:none;border:2px solid var(--m-ink)}
+.song small{display:block;opacity:.75;font-size:12.5px}
+.eq{display:flex;gap:3px;align-items:flex-end;height:20px;margin-left:auto}
+.eq i{width:5px;height:25%;background:var(--m-head)}
+.playing .eq i{animation:eq .7s steps(4) infinite alternate}
+.playing .eq i:nth-child(2){animation-delay:-.3s}.playing .eq i:nth-child(3){animation-delay:-.5s}.playing .eq i:nth-child(4){animation-delay:-.15s}
+@keyframes eq{from{height:20%}to{height:100%}}
+.t8{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 10px}
+.t8 button{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12.5px;text-decoration:underline;color:var(--m-ink);min-width:0}
+.t8 .av{width:100%;height:auto;aspect-ratio:1;font-size:24px}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.gbe{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed color-mix(in srgb,var(--m-ink) 30%, transparent)}
+.gbe:first-child{padding-top:0}
+.gbe p{font-size:14.5px}
+.gbe b{font-size:13px}
+.gbe small{opacity:.7;font-size:12px}
+.gform{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.gform textarea{width:100%;background:transparent;border:2px solid var(--m-head);color:var(--m-ink);padding:8px;height:64px;resize:none;outline:none}
+.gform .pbtn{align-self:flex-end}
+
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:20}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--panel);border-top:3px solid var(--glow);padding:16px 14px calc(18px + env(safe-area-inset-bottom,0px));max-height:86%;overflow-y:auto;animation:up .2s steps(4)}
+@keyframes up{from{transform:translateY(40px)}}
+.sheet h2{font-family:var(--pixel);font-weight:600;font-size:22px;margin:0 0 6px}
+.sheet .sub{margin:0 0 12px;color:var(--muted);font-size:14.5px}
+.opt{margin:14px 0}
+.opt>.lbl{display:block;font-family:var(--pixel);font-size:13px;color:var(--glow);margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--pixel);font-size:13.5px;padding:6px 10px;border:2px solid var(--line);background:var(--panel2)}
+.chip[aria-pressed="true"]{background:var(--glow);color:var(--glow-ink);border-color:var(--glow-ink)}
+.tile{width:54px;height:54px;border:2px solid var(--line)}
+.tile[aria-pressed="true"]{outline:3px solid var(--glow);outline-offset:2px}
+.field{width:100%;background:var(--night);border:2px solid var(--line);padding:9px 10px;outline:none}
+.field:focus{border-color:var(--glow)}
+textarea.field{min-height:72px;resize:vertical}
+.check{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:2px solid var(--line);font-family:var(--pixel);font-size:14.5px}
+.check input{width:20px;height:20px;accent-color:var(--glow)}
+.pick{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:2px solid var(--line);font-size:15px}
+.pick input{width:20px;height:20px;accent-color:var(--glow);margin-left:auto}
+.found{margin-top:12px;padding:12px;border:2px solid var(--line);background:var(--night)}
+.trail{font-family:var(--pixel);font-size:12px;color:var(--muted);margin:0 0 8px}
+.toast{position:absolute;left:14px;right:14px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--glow);color:var(--glow-ink);border:2px solid var(--glow-ink);box-shadow:4px 4px 0 var(--shadow);padding:10px 12px;font-family:var(--pixel);font-size:14px;opacity:0;transform:translateY(8px);transition:opacity .15s,transform .15s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.n-glitter,.playing .eq i,.sheet{animation:none}.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top" id="top"></header>
+  <main id="main"></main>
+  <nav class="tabbar" aria-label="Main">
+    <button class="tab" data-act="tab" data-id="home"></button>
+    <button class="tab" data-act="tab" data-id="porches"></button>
+    <button class="tab" data-act="tab" data-id="rings"></button>
+    <button class="tab" data-act="tab" data-id="me"></button>
+  </nav>
+  <div class="scrim" id="scrim" data-act="closeSheet" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Options" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* Pixel icons drawn from 9x9 grids */
+const PX = {
+  home:['....#....','...###...','..#####..','.#######.','#########','.#.....#.','.#.###.#.','.#.#.#.#.','.###.###.'],
+  bulb:['...###...','..#####..','.#######.','.#######.','.#######.','..#####..','...###...','...###...','...#.#...'],
+  ring:['...###...','.##...##.','.#.....#.','#.......#','#.......#','#.......#','.#.....#.','.##...##.','...###...'],
+  me:['...###...','..#####..','..#####..','...###...','.........','.#######.','#########','#########','#########'],
+  face:['..#####..','.#######.','##.###.##','#########','#########','##.###.##','###...###','.#######.','..#####..'],
+  play:['.#.......','.##......','.###.....','.####....','.#####...','.####....','.###.....','.##......','.#.......'],
+  pause:['.........','.##..##..','.##..##..','.##..##..','.##..##..','.##..##..','.##..##..','.##..##..','.........']
+};
+const px = (k, cls = 'px') => { const g = PX[k]; let r = ''; g.forEach((row, y) => [...row].forEach((c, x) => { if (c === '#') r += `<rect x="${x}" y="${y}" width="1.02" height="1.02"/>`; }));
+  return `<svg class="${cls}" viewBox="0 0 9 9" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true">${r}</svg>`; };
+
+/* ---------- Example data: every site, person and post is invented ---------- */
+const SITES = {
+  meridian:{name:'The Meridian Wire',domain:'meridianwire.news',color:'#1D3B6E',letter:'M'},
+  juniper:{name:'Juniper Ruiz',domain:'juniper.garden',color:'#B45309',letter:'J',webmention:true},
+  fernhill:{name:'Fernhill Outfitters',domain:'fernhill.co',color:'#2E5E3B',letter:'F'},
+  moth:{name:'Moth Radio',domain:'mothradio.band',color:'#9F1239',letter:'M',webmention:true,desc:'A four-piece band from a basement in Tacoma.',latest:"'Paper Lanterns' is out now",bg:'#1A0A12',fg:'#FFD6E4',font:'Georgia, serif'},
+  smallhours:{name:'Small Hours',domain:'smallhours.ink',color:'#0F766E',letter:'S',desc:'A webcomic about a cartographer who keeps finding new coastlines.',latest:'Page 214: Ines reaches the coast',bg:'#FDF6E3',fg:'#0F3D3A',font:'Georgia, serif'},
+  kitchen:{name:'Kitchen Table Notes',domain:'kitchentable.recipes',color:'#A16207',letter:'K',webmention:true,desc:'Weeknight recipes tested at one very small kitchen table.',latest:'One-pan miso butter mushrooms',bg:'#FFF7E6',fg:'#5A3300',font:'Georgia, serif'},
+  crumb:{name:'Crumb Shot',domain:'crumbshot.club',color:'#C2410C',letter:'C',desc:'Sourdough photos and crumb diagnostics.',latest:'Why your loaf has a tunnel in it',bg:'#F5E6D3',fg:'#4A2A10',font:'"Courier Prime", monospace'},
+  rye:{name:'Rye & Shine',domain:'ryeandshine.net',color:'#854D0E',letter:'R',desc:'A rye starter named Gus and the breads he makes.',latest:'Rye starters are easier than you think',bg:'#2B2118',fg:'#F3D9A4',font:'Georgia, serif'},
+  oven:{name:'The Wood Oven Log',domain:'woodovenlog.org',color:'#7F1D1D',letter:'W',desc:'Notes from building and firing a backyard oven.',latest:'Firing day 37: too hot, again',bg:'#FFFFFF',fg:'#222222',font:'"Times New Roman", serif'},
+  inkpot:{name:'Inkpot Strips',domain:'inkpot.studio',color:'#1E3A8A',letter:'I',desc:'Three-panel strips about a cat and a lighthouse keeper.',latest:'Strip 88: The cat learns to swim',bg:'#EEF2FF',fg:'#1E3A8A',font:'Gaegu, cursive'},
+  ninepanels:{name:'Nine Panels',domain:'ninepanels.art',color:'#334155',letter:'N',desc:'Pages and process notes from a comic drawn on a nine-panel grid.',latest:'How I letter by hand',bg:'#111111',fg:'#F5F5F5',font:'"Courier Prime", monospace'},
+  tram:{name:'Tram Diaries',domain:'tramdiaries.net',color:'#B91C1C',letter:'T',desc:'Riding every tram line in Europe, slowly.',latest:'Line 28, at dawn',bg:'#FEF3C7',fg:'#7F1D1D',font:'Georgia, serif'},
+  nightbus:{name:'Night Bus Notes',domain:'nightbusnotes.blog',color:'#312E81',letter:'N',desc:'Stories from the last bus home.',latest:'The driver who plays jazz',bg:'#0B0B2B',fg:'#C7D2FE',font:'"Courier Prime", monospace'},
+  stopline:{name:'Stop Line Zine',domain:'stopline.zone',color:'#BE185D',letter:'S',desc:'A photocopied transit zine that also lives online.',latest:'Issue 9: Bus shelters of the world',bg:'#FCE7F3',fg:'#831843',font:'Gaegu, cursive'},
+  tapehiss:{name:'Tape Hiss Records',domain:'tapehiss.club',color:'#6D28D9',letter:'T',desc:'A cassette-only label run out of a bike shop.',latest:"Cassette release: 'Lowlight' by Fen",bg:'#F5F3FF',fg:'#3B0764',font:'"Courier Prime", monospace'}
+};
+const PEOPLE = {
+  dani:{name:'Dani',color:'#E2622B'}, priya:{name:'Priya',color:'#8B5CF6'}, theo:{name:'Theo',color:'#2F6FD6'}, jun:{name:'Jun',color:'#0E9F8F'},
+  marisol:{name:'Marisol',color:'#C0266D'}, sam:{name:'Sam',color:'#65A30D'}, ola:{name:'Ola',color:'#D97706'}, bea:{name:'Bea',color:'#DB2777'},
+  kit:{name:'Kit',color:'#64748B'}, me:{name:'Rowan',color:'#C58A00'}
+};
+const POSTS = {
+  p8:{site:'kitchen',title:'One-pan miso butter mushrooms, in 20 minutes',excerpt:"Brown them hard, don't crowd the pan, and stir the miso in off the heat so it stays bright.",ago:'11h',art:['#F7D79B','#A16207','#FFFFFF']},
+  p6:{site:'moth',title:"'Paper Lanterns' is out now, plus fall tour dates",excerpt:'Our first single in two years. Recorded in a church hall in one take. Listen for the radiator at 2:41.',ago:'7h',art:['#F8B4C4','#9F1239','#FFE4A1']},
+  p1:{site:'meridian',title:'Council approves all-day bus lanes on the Fifth Avenue corridor',excerpt:'The 7–2 vote ends a two-year fight over curb space. Buses should run about six minutes faster at rush hour.',ago:'18m',art:['#9CC3E6','#1D3B6E','#F2C14E']},
+  p7:{site:'smallhours',title:'Page 214: Ines reaches the coast',excerpt:'New page is up. This chapter took longer than any before it.',ago:'9h',art:['#A7E0DA','#0F766E','#FDF6E3']},
+  p2:{site:'juniper',title:"I deleted Instagram for 90 days. Here's what I read instead.",excerpt:'I expected to miss the photos. What I missed was knowing when my favorite bakery had a new bread.',ago:'1h',art:['#F6C7A8','#B45309','#FFF1C9']},
+  p4:{site:'fernhill',title:'Meet the Ridgeback 40L, our first pack made from retired sailcloth',excerpt:'Every pack ships with a tag naming the boat its sail came from.',ago:'3h',art:['#CFE3D3','#2E5E3B','#F4A259']}
+};
+const PORCHES = {
+  transit:{name:'Transit nerds',color:'#6EE7C8',members:['theo','jun','sam','ola','me'],count:14,unread:5,msgs:[
+    {by:'theo',p:'p1'},{by:'theo',about:'p1',text:'IT PASSED'},{by:'jun',about:'p1',text:"I'll believe it when I see the paint."},{by:'sam',about:'p1',text:'Moving loading zones to side streets is a smart trade, honestly.'}]},
+  kitchen:{name:'Kitchen crew',color:'#FF7EB6',members:['priya','dani','jun','marisol','me'],count:6,unread:3,msgs:[
+    {by:'priya',p:'p8'},{by:'priya',about:'p8',text:'Making this tonight. Who has a good miso?'},{by:'jun',about:'p8',text:'White miso from the corner shop. The cheap one is fine.'},{by:'dani',about:'p8',text:'I added a splash of soy at the end. Perfect.'}]},
+  moth:{name:'Moth Radio fan club',color:'#FFC857',members:['bea','dani','kit','me'],count:9,unread:0,msgs:[
+    {by:'bea',p:'p6'},{by:'bea',about:'p6',text:'Seattle show, who is in?'},{by:'me',about:'p6',text:'Me. Front row.'}]}
+};
+const SITE_REPLIES = {
+  p8:[{name:'Hana Ito (author)',text:'So glad people are making this! Shiitake works too.'},{name:'Leo, from his blog',text:'Wrote up my version with brown butter and linked it here.'}],
+  p6:[{name:'Moth Radio',text:'Portland date gets announced Friday. All ages.'}],
+  p2:[{name:'Juniper Ruiz (author)',text:"Thanks for reading on the site. I'll post my full feed list next week."}]
+};
+let FEED = [
+  {t:'hand',by:'dani',p:'p8',note:'you NEED this recipe. trust me.'},
+  {t:'post',p:'p6'},
+  {t:'talk',porch:'transit',p:'p1'},
+  {t:'post',p:'p7'},
+  {t:'post',p:'p2'},
+  {t:'post',p:'p4'}
+];
+const RINGS = [
+  {id:'bake',name:'Home Bakers Ring',badge:'Bakers<br>ring',bg:'#FFC857',fg:'#5A3300',keeper:'priya',total:24,sites:['kitchen','crumb','rye','oven'],desc:'Sourdough diaries, bakery blogs and one person who only bakes pies.'},
+  {id:'comics',name:'Small Comics Ring',badge:'Small<br>comics',bg:'#6EE7C8',fg:'#063B33',keeper:'jun',total:31,sites:['smallhours','inkpot','ninepanels'],desc:'Webcomics drawn by hand and posted on their own sites.'},
+  {id:'transit',name:'Bus & Tram Ring',badge:'Bus+tram<br>ring',bg:'#FF7EB6',fg:'#4A0A2A',keeper:'theo',total:12,sites:['tram','nightbus','stopline'],desc:'Rider diaries, transit zines and the occasional timetable nerd.'},
+  {id:'lofi',name:'Lo-fi Bands Ring',badge:'Lo-fi<br>bands',bg:'#B9A2FF',fg:'#24124F',keeper:'bea',total:17,sites:['moth','tapehiss'],desc:'Bands and tiny labels that post news on their own sites first.'}
+];
+const BADGES = [['RSS<br>now!','#FF8A00','#000'],['Webring<br>member','#6EE7C8','#063B33'],['No<br>algorithms','#000','#2FD36C'],['Best viewed<br>on a phone','#C0C0C0','#000080'],['Hand<br>made','#FF7EB6','#3A0F2A']];
+
+/* ---------- Profiles ---------- */
+const TILES = {
+  stars:{label:'Stars',bg:'radial-gradient(1.5px 1.5px at 10px 12px, #fff 50%, transparent 52%) 0 0/40px 40px,radial-gradient(1px 1px at 28px 30px, #FFC857 50%, transparent 52%) 0 0/40px 40px,#141848'},
+  checker:{label:'Checker',bg:'repeating-conic-gradient(#2B1E5C 0 25%, #3B2A7A 0 50%) 0 0/24px 24px'},
+  hearts:{label:'Hearts',bg:'radial-gradient(circle at 6px 8px, #FF7EB6 3px, transparent 3.5px) 0 0/22px 22px,radial-gradient(circle at 11px 8px, #FF7EB6 3px, transparent 3.5px) 0 0/22px 22px,conic-gradient(from 135deg at 8.5px 13px, #FF7EB6 0 90deg, transparent 0) 0 0/22px 22px,#4A0F2E'},
+  clouds:{label:'Clouds',bg:'radial-gradient(circle at 20px 22px,#fff 9px,transparent 9.5px) 0 0/64px 48px,radial-gradient(circle at 33px 17px,#fff 12px,transparent 12.5px) 0 0/64px 48px,radial-gradient(circle at 46px 23px,#fff 8px,transparent 8.5px) 0 0/64px 48px,linear-gradient(#6DBBFF,#BFE2FF)'},
+  grass:{label:'Grass',bg:'repeating-linear-gradient(90deg,#2F7D32 0 6px,#3C9A40 6px 12px)'}
+};
+const PANELS = {night:{label:'Night',panel:'#1A1F4E',ink:'#F5EFDC',head:'#FFC857'},bubblegum:{label:'Bubblegum',panel:'#FFE4F1',ink:'#3A0F2A',head:'#D61F75'},lime:{label:'Lime',panel:'#F0FFD9',ink:'#163300',head:'#4D7C0F'},paper:{label:'Paper',panel:'#FFFFFF',ink:'#111111',head:'#1E3A8A'}};
+const NAMES = {glow:'Glow',rainbow:'Rainbow',glitter:'Glitter',plain:'Plain'};
+const MFONTS = {pixel:{label:'Pixel',css:'"Pixelify Sans", monospace'},type:{label:'Typewriter',css:'"Courier Prime", monospace'},hand:{label:'Handwritten',css:'Gaegu, cursive'},clean:{label:'Clean',css:'"Atkinson Hyperlegible", sans-serif'}};
+const ME_DEFAULT = {tile:'stars',panel:'night',name:'glitter',font:'clean',counter:true,song:true,headline:'the porch light is always on',mood:'cozy',about:'Bus rider, moon nerd, mushroom cook. I keep my porches small and my webrings big.',meet:'Anyone who still keeps a homepage. People who post crumb shots of their bread.'};
+let me = {...ME_DEFAULT};
+try { Object.assign(me, JSON.parse(localStorage.getItem('porchlight-me') || '{}')); } catch (e) {}
+const saveMe = () => { try { localStorage.setItem('porchlight-me', JSON.stringify(me)); } catch (e) {} };
+const PROFILES = {
+  me:{visits:4281,song:['Paper Lanterns','Moth Radio'],top:['dani','priya','theo','jun','bea','marisol','sam','kit'],gb:[{by:'dani',text:'love the new background!! thanks for the add',ago:'2d'},{by:'priya',text:'Kitchen crew misses you. Come back Thursday.',ago:'5d'},{by:'bea',text:'front row buddy!!',ago:'1w'}]},
+  dani:{cfg:{tile:'hearts',panel:'bubblegum',name:'rainbow',font:'hand',counter:true,song:true,headline:'currently: obsessed with miso',mood:'hungry',about:'I run Kitchen crew. I will hand you recipes whether you want them or not.',meet:'People who sign my guestbook back.'},visits:1842,song:['Lowlight','Fen'],top:['priya','me','jun','bea','marisol','kit','sam','theo'],gb:[{by:'priya',text:'that soy tip was elite',ago:'1d'},{by:'jun',text:'thanks for the add!!',ago:'4d'}]},
+  priya:{cfg:{tile:'grass',panel:'lime',name:'glow',font:'type',counter:true,song:false,headline:'keeper of the Home Bakers Ring',mood:'floury',about:'I bake on weekends and keep a webring of 24 baking blogs. Applications open, crumb shot required.',meet:'Bakers with their own sites.'},visits:977,top:['dani','me','kit','ola','sam','jun','bea','theo'],gb:[{by:'kit',text:'Gus the starter says hi',ago:'3d'}]}
+};
+function profileOf(k){
+  if (k === 'me') return {...PROFILES.me, cfg:me};
+  if (PROFILES[k]) return PROFILES[k];
+  const keys = Object.keys(TILES), i = k.length % keys.length;
+  return PROFILES[k] = {cfg:{tile:keys[i],panel:Object.keys(PANELS)[k.length % 4],name:Object.keys(NAMES)[i % 4],font:Object.keys(MFONTS)[(k.length + 1) % 4],counter:true,song:false,headline:`hi, I'm ${PEOPLE[k].name}`,mood:'chill',about:`${PEOPLE[k].name} shares a porch with you.`,meet:'Neighbors.'},visits:200 + k.length * 113,top:['me','dani','priya','theo','jun','bea','sam','kit'].filter(x => x !== k).slice(0,8),gb:[]};
+}
+
+/* ---------- State ---------- */
+const S = {tab:'home', view:{name:'home'}, stack:[], follows:new Set(['meridian','juniper','fernhill','moth','smallhours','kitchen']), ringFollow:new Set(), talkTab:{}, playing:false, sheet:null, found:null};
+
+/* ---------- Pieces ---------- */
+function art(p, cls = 'art'){ const [s,h,u] = p.art;
+  return `<span class="${cls}" style="background:repeating-conic-gradient(rgba(0,0,0,.16) 0 25%, transparent 0 50%) 0 0/4px 4px,radial-gradient(circle at 72% 32%, ${u} 0 11%, transparent 11.2%),linear-gradient(180deg, transparent 62%, ${h} 62% 80%, color-mix(in srgb,${h} 65%,#000) 80%),linear-gradient(180deg, ${s} 0 22%, color-mix(in srgb,${s} 85%,#fff) 22% 42%, color-mix(in srgb,${s} 70%,#fff) 42% 62%)"></span>`; }
+const sq = k => `<span class="sq" style="background:${SITES[k].color}">${SITES[k].letter}</span>`;
+const av = k => `<span class="av" style="background:${PEOPLE[k].color}">${PEOPLE[k].name[0]}</span>`;
+const b88 = (html, bg, fg) => `<span class="b88" style="background:${bg};color:${fg}">${html}</span>`;
+const siteRow = id => { const p = POSTS[id], s = SITES[p.site]; return `<div class="site">${sq(p.site)}<div class="who"><b>${esc(s.name)}</b><small>${s.domain} · ${p.ago} ago</small></div></div>`; };
+const talkCount = id => Object.values(PORCHES).reduce((n, pc) => n + pc.msgs.filter(m => m.about === id && m.text).length, 0);
+const postActs = id => `<div class="acts"><button class="sbtn" data-act="open" data-id="${id}">Talk${talkCount(id) ? ` (${talkCount(id)})` : ''}</button><button class="sbtn" data-act="hand" data-id="${id}">Hand to…</button><button class="sbtn go" data-act="visit" data-id="${id}">Visit ↗</button></div>`;
+const postCard = id => `${siteRow(id)}<button class="title" data-act="open" data-id="${id}">${esc(POSTS[id].title)}</button><p class="excerpt">${esc(POSTS[id].excerpt)}</p><button data-act="open" data-id="${id}" style="display:block;width:100%" aria-label="Open post">${art(POSTS[id])}</button>${postActs(id)}`;
+
+function feedItem(it){
+  if (it.t === 'post') return `<article class="card">${postCard(it.p)}</article>`;
+  if (it.t === 'hand') return `<article class="card"><p class="ctx">${av(it.by)} ${it.by === 'me' ? 'You' : PEOPLE[it.by].name} handed you this</p><p class="handnote">${esc(it.note)}</p>${postCard(it.p)}</article>`;
+  const pc = PORCHES[it.porch], talk = pc.msgs.filter(m => m.about === it.p && m.text).slice(-2);
+  return `<article class="card"><p class="ctx" style="color:var(--mint)"><i style="width:10px;height:10px;background:${pc.color}"></i>${esc(pc.name)} is talking about</p>${siteRow(it.p)}<button class="title" data-act="open" data-id="${it.p}" data-porch="${it.porch}">${esc(POSTS[it.p].title)}</button>
+    <div class="talkprev">${talk.map(m => `<p class="tp"><b>${PEOPLE[m.by].name}</b>${esc(m.text)}</p>`).join('')}</div>
+    <div class="acts"><button class="sbtn on" data-act="open" data-id="${it.p}" data-porch="${it.porch}">Join in</button><button class="sbtn go" data-act="visit" data-id="${it.p}">Visit ↗</button></div></article>`;
+}
+
+/* ---------- Views ---------- */
+function viewHome(){
+  const unread = Object.values(PORCHES).reduce((n, p) => n + p.unread, 0);
+  return `<p class="status"><span>Since last night:</span><span><b>${FEED.filter(i => i.t === 'post').length + 3}</b> new posts</span><span><b>${unread}</b> porch messages</span></p>
+  <div class="strip">${Object.entries(PORCHES).map(([k,p]) => `<button class="pchip" data-act="openPorch" data-id="${k}"><i style="background:${p.color}"></i>${esc(p.name)}${p.unread ? `<em class="n">${p.unread}</em>` : ''}</button>`).join('')}</div>
+  ${FEED.map(feedItem).join('')}
+  <div class="end">${px('bulb')}<h3>That's everything.</h3><p>You've seen every post from your sites since last night. The porch light stays on.</p>
+  <div class="btns"><button class="pbtn" data-act="surfRandom">Surf a webring</button><button class="pbtn alt" data-act="tab" data-id="porches">Check the porches</button></div></div>`;
+}
+
+function viewPost(id){
+  const p = POSTS[id], s = SITES[p.site], myPorches = Object.keys(PORCHES);
+  const cur = S.talkTab[id] || myPorches.find(k => PORCHES[k].msgs.some(m => m.about === id)) || myPorches[0];
+  let list;
+  if (cur === 'site') {
+    const r = SITE_REPLIES[id] || [];
+    list = s.webmention ? (r.length ? `<p class="intro">These replies live on ${s.domain}. Porchlight shows them here and can send yours back.</p><div class="msgs">${r.map(x => `<div class="msg"><span class="av" style="background:${s.color}">${s.letter}</span><div class="bub"><b>${esc(x.name)}</b>${esc(x.text)}</div></div>`).join('')}</div>` : `<p class="empty">No public replies on ${s.domain} yet.</p>`)
+      : `<p class="empty">${s.domain} doesn't accept replies from other sites yet. Talk about it on a porch instead.</p>`;
+  } else {
+    const msgs = PORCHES[cur].msgs.filter(m => m.about === id && m.text);
+    list = msgs.length ? `<div class="msgs">${msgs.map(msgHTML).join('')}</div>` : `<p class="empty">Nobody on ${esc(PORCHES[cur].name)} has talked about this yet.</p>`;
+  }
+  return `<article class="card">${siteRow(id)}<h2 class="title" style="font-size:22px">${esc(p.title)}</h2>${art(p)}<p class="excerpt" style="margin-top:10px">${esc(p.excerpt)}</p>
+    <button class="pbtn block" data-act="visit" data-id="${id}">Read it on ${s.domain} ↗</button>
+    <div class="acts"><button class="sbtn" data-act="hand" data-id="${id}">Hand to…</button></div></article>
+  <h2 class="h2">Talk about it</h2>
+  <div class="tabs2" role="group" aria-label="Where to talk">${myPorches.map(k => `<button class="t2" data-act="talkTab" data-id="${k}" aria-pressed="${cur === k}">${esc(PORCHES[k].name)}</button>`).join('')}<button class="t2" data-act="talkTab" data-id="site" aria-pressed="${cur === 'site'}">On ${s.domain}</button></div>
+  ${list}
+  ${cur === 'site' && !s.webmention ? '' : `<form class="composer" id="tform"><textarea id="ttext" placeholder="${cur === 'site' ? `Reply publicly on ${s.domain}` : `Say something to ${esc(PORCHES[cur].name)}`}" aria-label="Message"></textarea>
+    ${cur !== 'site' && s.webmention ? `<label class="wm" for="wm"><input type="checkbox" id="wm">Also post this as a public reply on ${s.domain}, so the author sees it on their own site.</label>` : ''}
+    <div class="row"><button class="pbtn">${cur === 'site' ? 'Send to their site' : 'Send to porch'}</button></div></form>`}`;
+}
+function msgHTML(m){
+  const mine = m.by === 'me';
+  const inner = m.p ? `<b>${PEOPLE[m.by].name} shared</b><button class="shared" data-act="open" data-id="${m.p}">${art(POSTS[m.p])}<span>${esc(POSTS[m.p].title)}</span></button>` : `<b>${mine ? 'You' : PEOPLE[m.by].name}</b>${esc(m.text)}`;
+  return `<div class="msg ${mine ? 'mine' : ''}">${av(m.by)}<div class="bub">${inner}</div></div>`;
+}
+
+function viewPorches(){
+  return `<p class="intro">Porches are small groups for talking about what you read. Up to 50 neighbors, invite only, and what's said on a porch stays there.</p>
+  ${Object.entries(PORCHES).map(([k,p]) => { const last = p.msgs[p.msgs.length - 1];
+    return `<button class="card porch" data-act="openPorch" data-id="${k}"><span class="stack">${p.members.slice(0,4).map(av).join('')}</span><span class="info"><b>${esc(p.name)}</b><small>${p.count} neighbors · ${last.text ? `${PEOPLE[last.by].name}: ${esc(last.text)}` : 'shared a post'}</small></span>${p.unread ? `<em class="n">${p.unread}</em>` : ''}</button>`; }).join('')}
+  <button class="pbtn alt block" data-act="newPorch">+ Start a porch</button>`;
+}
+function viewPorch(k){
+  const p = PORCHES[k];
+  return `<p class="intro">${p.members.map(m => PEOPLE[m].name).join(', ')} and ${p.count - p.members.length} more</p>
+  <div class="msgs">${p.msgs.map(msgHTML).join('')}</div>
+  <form class="composer" id="pform"><textarea id="ptext" placeholder="Say something to ${esc(p.name)}" aria-label="Message"></textarea><div class="row"><button class="pbtn">Send</button></div></form>`;
+}
+
+function viewRings(){
+  return `<p class="intro">Webrings are hand-made loops of sites that link to each other. Follow a whole ring, or surf it one site at a time like it's 1999.</p>
+  ${RINGS.map((r,i) => `<div class="card ring"><div class="ring-top">${b88(r.badge, r.bg, r.fg)}<div><h3>${esc(r.name)}</h3><small>${r.total} sites · kept by ${PEOPLE[r.keeper].name}</small></div></div><p>${esc(r.desc)}</p>
+    <div class="btns"><button class="pbtn" data-act="surf" data-id="${i}">Surf the ring ▸</button><button class="pbtn alt" data-act="ringFollow" data-id="${i}">${S.ringFollow.has(i) ? 'Following ring' : 'Follow all'}</button></div></div>`).join('')}
+  <div class="card ring"><h3>Start your own ring</h3><p>Pick a theme, invite sites, and Porchlight gives every member a little 88×31 badge and the prev/next code for their own site.</p><div class="btns"><button class="pbtn alt" data-act="toastMsg" data-id="Ring builder would open here">Start a ring</button></div></div>`;
+}
+function viewSurf(ri, i){
+  const r = RINGS[ri], k = r.sites[i], s = SITES[k], on = S.follows.has(k);
+  return `<div class="browser"><div class="bar"><i></i><i></i><i></i><span>https://${s.domain}</span></div>
+    <div class="sitepage" style="background:${s.bg};color:${s.fg};font-family:${s.font.replace(/"/g,"'")}"><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p><p class="latest">Latest post: ${esc(s.latest)}</p></div></div>
+  <div class="btns"><button class="pbtn ${on ? 'alt' : ''}" data-act="follow" data-id="${k}">${on ? 'Following' : 'Follow this site'}</button><button class="pbtn alt" data-act="visitSite" data-id="${k}">Visit ↗</button></div>
+  <nav class="ringnav" aria-label="Webring navigation"><button data-act="surfStep" data-id="-1" aria-label="Previous site">◂ prev</button><div class="mid">${esc(r.name)}<small>stop ${i + 1} of ${r.total}</small></div><button data-act="surfStep" data-id="1" aria-label="Next site">next ▸</button></nav>
+  <button class="pbtn alt block" data-act="surfStep" data-id="r">Random site in this ring</button>`;
+}
+
+function viewProfile(k){
+  const P = profileOf(k), c = P.cfg, pn = PANELS[c.panel], isMe = k === 'me', name = PEOPLE[k].name;
+  const style = `--m-tile:${TILES[c.tile].bg};--m-panel:${pn.panel};--m-ink:${pn.ink};--m-head:${pn.head};--m-font:${MFONTS[c.font].css}`;
+  const visits = String(P.visits + (isMe ? 0 : 1)).padStart(6, '0');
+  return `<div class="prof" style='${style}'>
+    <section class="mbox"><div class="in"><div class="mhead"><div class="mav">${px('face')}</div><div style="min-width:0">
+      <h2 class="mname n-${c.name}">${esc(name)}</h2>
+      <p class="mline">“${esc(c.headline)}”</p><p class="mline">Mood: ${esc(c.mood)}</p>
+      <span class="online"><i></i>On the porch now</span></div></div>
+      ${c.counter ? `<p class="mline" style="margin-top:10px!important;font-size:13px">You are visitor <span class="counter">${[...visits].map(d => `<span>${d}</span>`).join('')}</span></p>` : ''}
+      ${isMe ? `<div class="btns" style="margin-top:12px"><button class="pbtn" data-act="customize">Customize</button><button class="pbtn alt" data-act="toastMsg" data-id="Profile link copied: porchlight.example/rowan">Share</button></div>` : ''}
+    </div></section>
+    ${c.song && P.song ? `<section class="mbox ${S.playing ? 'playing' : ''}"><h3>${esc(name)}'s song</h3><div class="in song"><button class="playbtn" data-act="play" aria-label="${S.playing ? 'Pause' : 'Play'} song">${px(S.playing ? 'pause' : 'play', 'px')}</button><div><b>${esc(P.song[0])}</b><small>${esc(P.song[1])} · from their site, never autoplays</small></div><div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div></section>` : ''}
+    <section class="mbox"><h3>${esc(name)}'s Top 8</h3><div class="in"><div class="t8">${P.top.map(f => `<button data-act="friend" data-id="${f}">${av(f)}<span>${PEOPLE[f].name}</span></button>`).join('')}</div></div></section>
+    <section class="mbox"><h3>About me</h3><div class="in"><p>${esc(c.about)}</p></div></section>
+    <section class="mbox"><h3>Who I'd like to meet</h3><div class="in"><p>${esc(c.meet)}</p></div></section>
+    <section class="mbox"><h3>Badges</h3><div class="in badges">${BADGES.map(b => b88(...b)).join('')}${RINGS.slice(0, isMe ? 3 : 2).map(r => b88(r.badge, r.bg, r.fg)).join('')}</div></section>
+    <section class="mbox"><h3>Guestbook</h3><div class="in">
+      ${P.gb.length ? P.gb.map(g => `<div class="gbe">${av(g.by)}<div><b>${g.by === 'me' ? 'You' : PEOPLE[g.by].name}</b> <small>· ${g.ago}</small><p>${esc(g.text)}</p></div></div>`).join('') : `<p style="opacity:.8">No entries yet. Be the first.</p>`}
+      ${isMe ? `<p style="font-size:13px;opacity:.75;margin-top:10px">Visitors sign here. Tap a friend in your Top 8 to sign theirs.</p>` : `<form class="gform" id="gform"><textarea id="gtext" maxlength="200" placeholder="Sign ${esc(name)}'s guestbook" aria-label="Guestbook message"></textarea><button class="pbtn">Sign guestbook</button></form>`}
+    </div></section>
+  </div>`;
+}
+function customizeHTML(){
+  return `<h2>Customize your page</h2><p class="sub">Go wild. Only your profile changes; the feed stays readable for everyone.</p>
+  <div class="opt"><span class="lbl">Background</span><div class="chips">${Object.entries(TILES).map(([k,t]) => `<button class="tile" data-act="mTile" data-id="${k}" aria-pressed="${me.tile === k}" style="background:${t.bg}" aria-label="${t.label}"></button>`).join('')}</div></div>
+  <div class="opt"><span class="lbl">Boxes</span><div class="chips">${Object.entries(PANELS).map(([k,p]) => `<button class="chip" data-act="mPanel" data-id="${k}" aria-pressed="${me.panel === k}"><i style="display:inline-block;width:10px;height:10px;margin-right:6px;background:${p.head}"></i>${p.label}</button>`).join('')}</div></div>
+  <div class="opt"><span class="lbl">Name style</span><div class="chips">${Object.entries(NAMES).map(([k,l]) => `<button class="chip" data-act="mName" data-id="${k}" aria-pressed="${me.name === k}">${l}</button>`).join('')}</div></div>
+  <div class="opt"><span class="lbl">Font</span><div class="chips">${Object.entries(MFONTS).map(([k,f]) => `<button class="chip" data-act="mFont" data-id="${k}" aria-pressed="${me.font === k}" style="font-family:${f.css.replace(/"/g,"'")}">${f.label}</button>`).join('')}</div></div>
+  <label class="check" for="m-counter">Visitor counter<input type="checkbox" id="m-counter" data-mt="counter" ${me.counter ? 'checked' : ''}></label>
+  <label class="check" for="m-song">Profile song<input type="checkbox" id="m-song" data-mt="song" ${me.song ? 'checked' : ''}></label>
+  <div class="opt"><label class="lbl" for="m-headline">Headline</label><input class="field" id="m-headline" data-mf="headline" maxlength="60" value="${esc(me.headline)}"></div>
+  <div class="opt"><label class="lbl" for="m-mood">Mood</label><input class="field" id="m-mood" data-mf="mood" maxlength="30" value="${esc(me.mood)}"></div>
+  <div class="opt"><label class="lbl" for="m-about">About me</label><textarea class="field" id="m-about" data-mf="about" maxlength="300">${esc(me.about)}</textarea></div>
+  <div class="opt"><label class="lbl" for="m-meet">Who I'd like to meet</label><textarea class="field" id="m-meet" data-mf="meet" maxlength="200">${esc(me.meet)}</textarea></div>
+  <div class="btns"><button class="pbtn alt" data-act="mReset">Reset</button><button class="pbtn" style="flex:1" data-act="closeSheet">Done</button></div>`;
+}
+
+/* ---------- Render ---------- */
+const TABS = {home:['home','Home'],porches:['bulb','Porches'],rings:['ring','Rings'],me:['me','Me']};
+function topbar(v){
+  const back = `<button class="back" data-act="back" aria-label="Back">◂</button>`;
+  switch (v.name) {
+    case 'home': return `<div class="logo">${px('bulb')}Porchlight</div><button class="pbtn alt" data-act="addSite" aria-label="Follow a website">+ Site</button>`;
+    case 'post': return `${back}<h1>${esc(SITES[POSTS[v.id].site].name)}</h1>`;
+    case 'porch': return `${back}<h1>${esc(PORCHES[v.id].name)}</h1>`;
+    case 'surf': return `${back}<h1>${esc(RINGS[v.ring].name)}</h1>`;
+    case 'friend': return `${back}<h1>${PEOPLE[v.id].name}'s page</h1>`;
+    case 'me': return `<h1>Rowan's page</h1><button class="pbtn alt" data-act="customize">Customize</button>`;
+    case 'porches': return `<h1>Porches</h1>`;
+    default: return `<h1>Webrings</h1>`;
+  }
+}
+function render(keep){
+  const main = $('#main'), y = main.scrollTop, v = S.view;
+  $('#top').innerHTML = topbar(v);
+  main.innerHTML = ({home:viewHome, porches:viewPorches, rings:viewRings, me:() => viewProfile('me'), friend:() => viewProfile(v.id), post:() => viewPost(v.id), porch:() => viewPorch(v.id), surf:() => viewSurf(v.ring, v.i)})[v.name]();
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-current', t.dataset.id === S.tab ? 'page' : 'false'));
+  main.scrollTop = keep ? y : 0;
+}
+document.querySelectorAll('.tab').forEach(t => { const [i,l] = TABS[t.dataset.id]; t.innerHTML = px(i) + l; });
+let toastT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+function openSheet(kind, html){ S.sheet = kind; $('#sheet').innerHTML = html; $('#sheet').hidden = false; $('#scrim').hidden = false; }
+function closeSheet(){ $('#sheet').hidden = true; $('#scrim').hidden = true; S.sheet = null; }
+function refresh(){ if (S.sheet === 'custom') { const sh = $('#sheet'), y = sh.scrollTop; sh.innerHTML = customizeHTML(); sh.scrollTop = y; } }
+function go(view){ S.stack.push({view:S.view, y:$('#main').scrollTop}); S.view = view; render(); }
+function lookup(raw){
+  const q = raw.trim().toLowerCase(); if (!q) return null;
+  const handle = q.startsWith('@') ? q : null;
+  const dom = handle ? handle.slice(1).replace(/[^a-z0-9-]/g,'') + '.com' : q.replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/\/.*$/,'') + (q.includes('.') ? '' : '.com');
+  const k = Object.keys(SITES).find(k => SITES[k].domain === dom);
+  const ring = k && RINGS.find(r => r.sites.includes(k));
+  return {key:k, name:k ? SITES[k].name : dom.split('.')[0].replace(/\b\w/g, c => c.toUpperCase()), domain:dom, handle, ring};
+}
+const addHTML = () => `<h2>Follow a website</h2><p class="sub">Paste a web address, or an @handle from Instagram or X. Porchlight finds the site behind it and its feed.</p>
+  <form id="lookup" style="display:flex;gap:8px"><input class="field" id="q" placeholder="crumbshot.club or @handle" autocomplete="off" aria-label="Website or handle"><button class="pbtn">Find</button></form>
+  ${S.found ? `<div class="found"><p class="trail">${S.found.handle ? esc(S.found.handle) + ' → ' : ''}${esc(S.found.domain)} → feed found</p><b style="font-family:var(--pixel);font-size:18px">${esc(S.found.name)}</b>
+    ${S.found.ring ? `<p class="sub" style="margin:6px 0 0">This site is in the <b>${esc(S.found.ring.name)}</b>.</p>` : ''}<div class="btns" style="margin-top:10px"><button class="pbtn" data-act="followFound">Follow</button></div></div>` : ''}`;
+
+const H = {
+  tab(id){ S.tab = id; S.view = {name:id}; S.stack = []; render(); },
+  back(){ const f = S.stack.pop(); S.view = f ? f.view : {name:S.tab}; render(); if (f) $('#main').scrollTop = f.y; },
+  open(id, el){ if (el.dataset.porch) S.talkTab[id] = el.dataset.porch; go({name:'post', id}); },
+  openPorch(k){ PORCHES[k].unread = 0; if (S.tab !== 'porches') { S.tab = 'porches'; S.stack = []; S.view = {name:'porches'}; } go({name:'porch', id:k}); },
+  talkTab(k){ S.talkTab[S.view.id] = k; render(true); },
+  visit(id){ toast(`Opens ${SITES[POSTS[id].site].domain} in an in-app browser.`); },
+  visitSite(k){ toast(`Opens ${SITES[k].domain} in an in-app browser.`); },
+  hand(id){ S.hid = id; openSheet('hand', `<h2>Hand it to…</h2><p class="sub">${esc(POSTS[id].title)}</p>
+    <form id="hform">${['dani','priya','theo','jun'].map(f => `<label class="pick" for="h-${f}">${av(f)}${PEOPLE[f].name}<input type="checkbox" id="h-${f}" value="${PEOPLE[f].name}"></label>`).join('')}
+    ${Object.entries(PORCHES).map(([k,p]) => `<label class="pick" for="h-${k}"><span class="av" style="background:${p.color};color:#111">#</span>${esc(p.name)}<input type="checkbox" id="h-${k}" value="${esc(p.name)}" data-porch="${k}"></label>`).join('')}
+    <div class="opt"><label class="lbl" for="hnote">Add a note (optional)</label><input class="field" id="hnote" maxlength="120" placeholder="you'll like this"></div>
+    <button class="pbtn block">Hand it over</button></form>`); },
+  surf(i){ S.tab = 'rings'; go({name:'surf', ring:+i, i:0}); },
+  surfRandom(){ S.tab = 'rings'; S.stack = []; S.view = {name:'rings'}; go({name:'surf', ring:Math.floor(Math.random() * RINGS.length), i:0}); },
+  surfStep(d){ const v = S.view, n = RINGS[v.ring].sites.length; let i;
+    if (d === 'r') { do { i = Math.floor(Math.random() * n); } while (n > 1 && i === v.i); } else i = (v.i + (+d) + n) % n;
+    S.view = {...v, i}; render(); },
+  follow(k){ S.follows.has(k) ? S.follows.delete(k) : S.follows.add(k); render(true); toast(S.follows.has(k) ? `Following ${SITES[k].name}` : `Unfollowed ${SITES[k].name}`); },
+  ringFollow(i){ const r = RINGS[+i]; if (S.ringFollow.has(+i)) { S.ringFollow.delete(+i); toast(`Stopped following ${r.name}`); } else { S.ringFollow.add(+i); r.sites.forEach(k => S.follows.add(k)); toast(`Following all ${r.total} sites in ${r.name}`); } render(true); },
+  newPorch(){ toast('Name it, invite up to 50 people, done.'); },
+  addSite(){ S.found = null; openSheet('add', addHTML()); },
+  followFound(){ toast(`Following ${S.found.name}`); if (S.found.key) S.follows.add(S.found.key); closeSheet(); },
+  friend(k){ if (k === 'me') { H.tab('me'); return; } go({name:'friend', id:k}); },
+  play(){ S.playing = !S.playing; render(true); },
+  customize(){ if (S.view.name !== 'me') H.tab('me'); openSheet('custom', customizeHTML()); },
+  mTile(k){ me.tile = k; saveMe(); render(true); refresh(); },
+  mPanel(k){ me.panel = k; saveMe(); render(true); refresh(); },
+  mName(k){ me.name = k; saveMe(); render(true); refresh(); },
+  mFont(k){ me.font = k; saveMe(); render(true); refresh(); },
+  mReset(){ me = {...ME_DEFAULT}; saveMe(); render(true); refresh(); },
+  toastMsg(_, el){ toast(el.dataset.id); },
+  closeSheet
+};
+document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const h = H[el.dataset.act]; if (h) { e.preventDefault(); h(el.dataset.id, el); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+document.addEventListener('change', e => { const k = e.target.dataset.mt; if (k) { me[k] = e.target.checked; saveMe(); render(true); } });
+document.addEventListener('input', e => { const k = e.target.dataset.mf; if (k) { me[k] = e.target.value; saveMe(); render(true); } });
+document.addEventListener('submit', e => {
+  e.preventDefault(); const f = e.target;
+  if (f.id === 'tform') { const t = $('#ttext').value.trim(); if (!t) return; const id = S.view.id, s = SITES[POSTS[id].site], cur = S.talkTab[id] || Object.keys(PORCHES).find(k => PORCHES[k].msgs.some(m => m.about === id)) || Object.keys(PORCHES)[0];
+    if (cur === 'site') { (SITE_REPLIES[id] ||= []).push({name:'Rowan (you)', text:t}); render(true); toast(`Sent to ${s.domain} as a Webmention`); return; }
+    PORCHES[cur].msgs.push({by:'me', about:id, text:t}); S.talkTab[id] = cur;
+    const wm = $('#wm')?.checked; if (wm) (SITE_REPLIES[id] ||= []).push({name:'Rowan (you)', text:t});
+    render(true); toast(wm ? `Sent to ${PORCHES[cur].name} and ${s.domain}` : `Sent to ${PORCHES[cur].name}`); }
+  if (f.id === 'pform') { const t = $('#ptext').value.trim(); if (!t) return; PORCHES[S.view.id].msgs.push({by:'me', text:t}); render(true); $('#main').scrollTop = $('#main').scrollHeight; }
+  if (f.id === 'hform') { const picked = [...f.querySelectorAll('input[type=checkbox]:checked')]; if (!picked.length) { toast('Pick at least one person or porch'); return; }
+    picked.filter(i => i.dataset.porch).forEach(i => PORCHES[i.dataset.porch].msgs.push({by:'me', p:S.hid}));
+    closeSheet(); render(true); toast(`Handed to ${picked.map(i => i.value).join(', ')}`); }
+  if (f.id === 'gform') { const t = $('#gtext').value.trim(); if (!t) return; profileOf(S.view.id).gb.unshift({by:'me', text:t, ago:'now'}); render(true); toast(`Signed ${PEOPLE[S.view.id].name}'s guestbook`); }
+  if (f.id === 'lookup') { S.found = lookup($('#q').value); $('#sheet').innerHTML = addHTML(); }
+});
+render();
+</script>
+</body>
+</html>
